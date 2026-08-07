@@ -512,25 +512,30 @@
             document.getElementById('voucherModal').classList.add('hidden');
         };
 
-        // PDF ဒေါင်းလုဒ်ဆွဲသည့် အစစ်အမှန် ပြင်ဆင်ချက် Function
+                // စည်းကမ်းချက်များ မပြတ်ဘဲ အပြည့်ပါဝင်စေသည့် PDF ဒေါင်းလုဒ် Function
         window.downloadPDF = async () => {
             const element = document.getElementById('pdfContent');
             const voucherId = document.getElementById('vVoucherId').innerText;
 
             try {
-                // html2canvas + jsPDF တိုက်ရိုက် ရေးဆွဲခြင်း
+                // ၁။ Canvas အဖြစ် ကြည်လင်စွာ ပြောင်းလဲခြင်း
                 const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: "#ffffff"
+                    backgroundColor: "#ffffff",
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight
                 });
 
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
 
-                const imgWidth = 190;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                // ၂။ ပုံ၏ အချိုးအစားအတိုင်း PDF အမြင့်ကို အလိုအလျောက် ချိန်ညှိခြင်း
+                const imgWidth = 190; // A4 စာရွက် ဘေးအနား သတ်မှတ်ချက် (mm)
+                const imgHeight = (canvas.height * imgWidth) / canvas.width; // အမြင့်ကို အလိုအလျောက် တွက်ချက်သည်
+
+                // ၃။ ပုံအမြင့် ပိုရှည်ပါက PDF စာရွက်အမြင့်ကိုပါ လိုက်လံ ရှည်ပေးခြင်း (Custom Canvas Height)
+                const pdf = new jsPDF('p', 'mm', [210, imgHeight + 20]); // A4 အကျယ် (210mm) နှင့် တွက်ချက်ထားသော အမြင့်
 
                 pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                 pdf.save(`Contract_${voucherId}.pdf`);
