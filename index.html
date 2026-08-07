@@ -7,9 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- PDF ဒေါင်းလုဒ်ဆွဲရန် မှန်ကန်သော Library များ -->
+    <!-- PDF & QR Code Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
@@ -24,6 +27,7 @@
             padding: 15px;
             box-sizing: border-box;
             color: #0f172a;
+            position: relative;
         }
 
         @media print {
@@ -49,9 +53,14 @@
                 <i class="fa-solid fa-arrows-rotate text-emerald-400 text-xl"></i>
                 <span class="text-lg font-bold tracking-wide">Quick TradeIn</span>
             </div>
-            <button onclick="openTermsModal()" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600">
-                စည်းကမ်းချက်များ
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openScannerModal()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow">
+                    <i class="fa-solid fa-qrcode"></i> QR စကင်ဖတ်မည်
+                </button>
+                <button onclick="openTermsModal()" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600">
+                    စည်းကမ်းချက်များ
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -198,12 +207,12 @@
 
     </main>
 
-    <!-- Modal View for Voucher -->
+    <!-- Modal View for Voucher / Receipt -->
     <div id="voucherModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-2 md:p-4 overflow-y-auto no-print">
         <div class="bg-white rounded-2xl max-w-xl w-full p-4 md:p-6 space-y-4 my-auto shadow-2xl max-h-[95vh] overflow-y-auto">
             
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold text-indigo-900">စာချုပ်/ဘောက်ချာ ကြည့်ရှုခြင်း</h3>
+                <h3 class="text-base font-bold text-indigo-900" id="modalHeaderTitle">စာချုပ်/ဘောက်ချာ ကြည့်ရှုခြင်း</h3>
                 <button onclick="closeVoucherModal()" class="text-slate-400 hover:text-slate-600 text-lg">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -211,9 +220,15 @@
 
             <!-- Dynamic Voucher Box -->
             <div id="pdfContent" class="voucher-box rounded-lg">
+                
+                <!-- Status Watermark (If Completed) -->
+                <div id="statusWatermark" class="hidden" style="position: absolute; top: 35%; left: 15%; transform: rotate(-25deg); border: 4px solid #dc2626; color: #dc2626; font-size: 24px; font-weight: bold; padding: 10px 20px; border-radius: 8px; opacity: 0.85; pointer-events: none; text-align: center; background: rgba(255,255,255,0.8);">
+                    ပစ္စည်း ပြန်လည်ရွေးယူပြီး<br><span style="font-size: 14px;">(စာချုပ် ပျက်ပြယ်ပြီးပါပြီ)</span>
+                </div>
+
                 <div style="text-align: center; border-bottom: 2px solid #1e1b4b; padding-bottom: 8px; margin-bottom: 12px;">
                     <h2 style="margin: 0; font-size: 20px; font-weight: bold; color: #1e1b4b;">Quick TradeIn</h2>
-                    <p style="margin: 2px 0; font-size: 11px; font-weight: bold;">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</p>
+                    <p id="voucherSubHeading" style="margin: 2px 0; font-size: 11px; font-weight: bold;">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</p>
                     <div style="font-size: 10px; margin-top: 4px;">
                         <strong>Voucher ID:</strong> <span id="vVoucherId" style="color: #d97706; font-weight: bold;"></span>
                     </div>
@@ -239,12 +254,20 @@
                     ၃။ ရောင်းသူသည် ဤစည်းကမ်းချက်များအားလုံးကို သဘောတူညီပါသဖြင့် အမှန်ခြစ်၍ လက်မှတ်ရေးထိုးထားပါသည်။
                 </div>
 
-                <div style="margin-top: 20px; display: flex; justify-content: space-between; font-size: 10px;">
-                    <div style="text-align: center; width: 45%;">
+                <!-- Footer with Dynamic QR Code and Signatures -->
+                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px;">
+                    <!-- QR Code Box -->
+                    <div style="text-align: center; width: 30%;">
+                        <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 4px;"></div>
+                        <div style="font-size: 8px; color: #64748b;">မူရင်း စာချုပ် စစ်ဆေးရန်</div>
+                    </div>
+
+                    <div style="text-align: center; width: 33%;">
                         <div id="vSignatureText" style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 5px;"></div>
                         <div>ရောင်းသူ လက်မှတ်</div>
                     </div>
-                    <div style="text-align: center; width: 45%;">
+                    
+                    <div style="text-align: center; width: 33%;">
                         <div style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 5px;">&nbsp;</div>
                         <div>ဆိုင်ပိုင်ရှင် / ဝယ်သူ လက်မှတ်</div>
                     </div>
@@ -266,6 +289,23 @@
         </div>
     </div>
 
+    <!-- QR Camera Scanner Modal -->
+    <div id="scannerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-base font-bold text-indigo-900 flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> QR Code စကင်ဖတ် စစ်ဆေးခြင်း
+                </h3>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div id="qr-reader" class="w-full rounded-xl overflow-hidden border border-slate-200"></div>
+            <p class="text-xs text-slate-500 text-center">စာချုပ်ပေါ်ရှိ QR Code ကို ကင်မရာရှေ့တွင် ပြပေးပါ</p>
+        </div>
+    </div>
+
     <!-- Hidden Print Container -->
     <div id="voucherPrintArea" class="hidden"></div>
 
@@ -281,7 +321,7 @@
         </div>
     </div>
 
-    <!-- Firebase Script -->
+    <!-- Firebase & System Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -301,6 +341,8 @@
         const db = getFirestore(app);
 
         let allContractsData = [];
+        let html5QrcodeScanner = null;
+        const ADMIN_PIN = "1234"; // စကားဝှက်
 
         document.getElementById('tradeDate').valueAsDate = new Date();
 
@@ -309,6 +351,28 @@
             return `QT-${new Date().getFullYear()}-${randomNum}`;
         };
         document.getElementById('generatedVoucherId').innerText = generateVoucherCode();
+
+        // Audio Voice Feedback Function
+        window.speakFeedback = (text) => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'my-MM'; // မြန်မာသံထွက် ဦးစားပေး
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        };
+
+        // Admin Password Guard
+        window.checkAdminPassword = () => {
+            const userInput = prompt("လုပ်ဆောင်ရန် Admin Password (စကားဝှက်) ရိုက်ထည့်ပါ:");
+            if (userInput === ADMIN_PIN) {
+                return true;
+            } else if (userInput !== null) {
+                alert("Password မမှန်ကန်ပါ။");
+            }
+            return false;
+        };
 
         window.calculateDetails = () => {
             const amount = parseFloat(document.getElementById('payoutAmount').value) || 0;
@@ -370,6 +434,10 @@
 
             const btn = document.getElementById('submitBtn');
             const editId = document.getElementById('editDocId').value;
+
+            // ပြင်ဆင်ခြင်းဖြစ်ပါက Password စစ်မည်
+            if (editId && !checkAdminPassword()) return;
+
             btn.disabled = true;
 
             try {
@@ -486,10 +554,12 @@
             tbody.innerHTML = html;
         }
 
-        // ဘောက်ချာ ကြည့်ရှုခြင်း Modal
+        // ဘောက်ချာ ကြည့်ရှုခြင်း Modal (With Dynamic QR Code Generation)
         window.openVoucherModal = (id) => {
             const item = allContractsData.find(c => c.id === id);
             if (!item) return;
+
+            const isCompleted = item.status === "COMPLETED";
 
             document.getElementById('vVoucherId').innerText = item.voucherId || 'QT-UNKNOWN';
             document.getElementById('vSellerName').innerText = item.sellerName || '-';
@@ -504,6 +574,26 @@
             document.getElementById('vDueDate').innerText = item.dueDate || '-';
             document.getElementById('vSignatureText').innerText = item.signature || item.sellerName;
 
+            // ရွေးယူပြီးပါက Watermark နှင့် ပြေစာအဖြစ် ပြောင်းလဲခြင်း
+            const watermark = document.getElementById('statusWatermark');
+            const subHeading = document.getElementById('voucherSubHeading');
+            if (isCompleted) {
+                watermark.classList.remove('hidden');
+                subHeading.innerText = "ပစ္စည်း ပြန်လည်ရွေးယူပြီးကြောင်း သက်သေခံ ပြေစာ (Settled Receipt)";
+            } else {
+                watermark.classList.add('hidden');
+                subHeading.innerText = "ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်";
+            }
+
+            // QR Code ထုတ်လုပ်ခြင်း
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: item.voucherId,
+                width: 65,
+                height: 65
+            });
+
             document.getElementById('voucherPrintArea').innerHTML = document.getElementById('pdfContent').outerHTML;
             document.getElementById('voucherModal').classList.remove('hidden');
         };
@@ -512,13 +602,12 @@
             document.getElementById('voucherModal').classList.add('hidden');
         };
 
-                // စည်းကမ်းချက်များ မပြတ်ဘဲ အပြည့်ပါဝင်စေသည့် PDF ဒေါင်းလုဒ် Function
+        // စည်းကမ်းချက်များ မပြတ်ဘဲ အပြည့်ပါဝင်စေသည့် PDF ဒေါင်းလုဒ် Function
         window.downloadPDF = async () => {
             const element = document.getElementById('pdfContent');
             const voucherId = document.getElementById('vVoucherId').innerText;
 
             try {
-                // ၁။ Canvas အဖြစ် ကြည်လင်စွာ ပြောင်းလဲခြင်း
                 const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
@@ -530,12 +619,10 @@
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
 
-                // ၂။ ပုံ၏ အချိုးအစားအတိုင်း PDF အမြင့်ကို အလိုအလျောက် ချိန်ညှိခြင်း
                 const imgWidth = 190; // A4 စာရွက် ဘေးအနား သတ်မှတ်ချက် (mm)
-                const imgHeight = (canvas.height * imgWidth) / canvas.width; // အမြင့်ကို အလိုအလျောက် တွက်ချက်သည်
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-                // ၃။ ပုံအမြင့် ပိုရှည်ပါက PDF စာရွက်အမြင့်ကိုပါ လိုက်လံ ရှည်ပေးခြင်း (Custom Canvas Height)
-                const pdf = new jsPDF('p', 'mm', [210, imgHeight + 20]); // A4 အကျယ် (210mm) နှင့် တွက်ချက်ထားသော အမြင့်
+                const pdf = new jsPDF('p', 'mm', [210, imgHeight + 20]);
 
                 pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                 pdf.save(`Contract_${voucherId}.pdf`);
@@ -543,6 +630,39 @@
                 alert("PDF ဒေါင်းလုဒ်ဆွဲရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
             }
         };
+
+        // QR Scanner Control & Audio Feedback
+        window.openScannerModal = () => {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess);
+        };
+
+        window.closeScannerModal = () => {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+            document.getElementById('scannerModal').classList.add('hidden');
+        };
+
+        function onScanSuccess(decodedText) {
+            closeScannerModal();
+            const foundItem = allContractsData.find(c => c.voucherId === decodedText || c.id === decodedText);
+
+            if (foundItem) {
+                openVoucherModal(foundItem.id);
+                if (foundItem.status === "COMPLETED") {
+                    speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည် ရွေးယူပြီး ပျက်ပြယ်ပြီးသား ဖြစ်ပါသည်");
+                    alert(`⚠️ [စစ်ဆေးတွေ့ရှိချက်]\nVoucher ID: ${foundItem.voucherId}\nရောင်းသူ: ${foundItem.sellerName}\nအခြေအနေ: ပစ္စည်း ပြန်လည်ရွေးယူပြီး (စာချုပ် ပျက်ပြယ်ပြီးပါပြီ)`);
+                } else {
+                    speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ရွေးယူရန် ကျန်ရှိနေသေးပါသည်");
+                    alert(`✅ [စစ်ဆေးတွေ့ရှိချက်]\nVoucher ID: ${foundItem.voucherId}\nရောင်းသူ: ${foundItem.sellerName}\nအခြေအနေ: စာချုပ် အကြုံးဝင်နေသေးသည် (ပစ္စည်း ရွေးယူရန် ကျန်ရှိ)`);
+                }
+            } else {
+                speakFeedback("စာချုပ် မှတ်တမ်း မတွေ့ရှိပါ");
+                alert("❌ မှတ်တမ်းမတွေ့ရှိပါ: စကင်ဖတ်လိုက်သော QR Code သည် မမှန်ကန်ပါ သို့မဟုတ် စနစ်ထဲတွင် မရှိပါ။");
+            }
+        }
 
         // Search Filter
         window.filterContracts = () => {
@@ -556,19 +676,24 @@
             renderTable(filtered);
         };
 
-        // Status Toggle
+        // Status Toggle (With Audio Feedback)
         window.toggleStatus = async (id, currentStatus) => {
             const newStatus = currentStatus === "COMPLETED" ? "ACTIVE" : "COMPLETED";
             try {
                 await updateDoc(doc(db, "contracts", id), { status: newStatus });
+                if (newStatus === "COMPLETED") {
+                    speakFeedback("ပစ္စည်း ပြန်လည် ရွေးယူပြီးကြောင်း အတည်ပြုလိုက်ပါပြီ");
+                }
                 loadContracts();
             } catch (e) {
                 alert("Status ပြောင်း၍ မရပါ: " + e.message);
             }
         };
 
-        // Edit Contract
+        // Edit Contract (Protected with Password)
         window.editContract = (id) => {
+            if (!checkAdminPassword()) return;
+
             const item = allContractsData.find(c => c.id === id);
             if (!item) return;
 
@@ -589,8 +714,10 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // Delete Contract
+        // Delete Contract (Protected with Password)
         window.deleteContract = async (id) => {
+            if (!checkAdminPassword()) return;
+
             if (confirm('ဤစာချုပ်မှတ်တမ်းကို ဖျက်ပစ်ရန် သေချာပါသလား။')) {
                 try {
                     await deleteDoc(doc(db, "contracts", id));
