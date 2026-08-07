@@ -36,17 +36,22 @@
         
         <!-- Contract Form -->
         <form id="contractForm" class="bg-white rounded-2xl shadow-xl p-5 md:p-8 space-y-5 border border-slate-100">
-            <input type="hidden" id="editDocId" value=""> <!-- ပြင်ဆင်သည့်အခါ သုံးရန် -->
+            <input type="hidden" id="editDocId" value="">
 
             <h2 class="text-base md:text-lg font-bold text-indigo-900 border-b pb-2 border-slate-200 flex items-center justify-between">
                 <span><i class="fa-solid fa-file-contract text-indigo-600"></i> စာချုပ် အချက်အလက်များ</span>
                 <span id="formModeText" class="text-xs text-emerald-600 font-normal"></span>
             </h2>
 
-            <div class="grid md:grid-cols-2 gap-4">
+            <div class="grid md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းသူအမည် *</label>
                     <input type="text" id="sellerName" value="ကျော်ကျော်" oninput="autoUpdateSignature()" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ဖုန်းနံပါတ် *</label>
+                    <input type="tel" id="sellerPhone" value="09123456789" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
                 <div>
@@ -105,7 +110,7 @@
                 <input type="text" id="typedSignature" readonly placeholder="အမှန်ခြစ်ပါက အလိုအလျောက် လက်မှတ်ထိုးပါမည်" class="w-full p-2.5 text-xs font-semibold border border-slate-300 rounded-lg outline-none bg-slate-100 text-indigo-900">
             </div>
 
-            <!-- Buttons: Save, Copy & Share -->
+            <!-- Buttons -->
             <div class="space-y-2">
                 <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex justify-center items-center gap-2">
                     <i class="fa-solid fa-floppy-disk"></i> <span id="submitBtnText">စာချုပ်အား သိမ်းဆည်းမည်</span>
@@ -122,31 +127,37 @@
             </div>
         </form>
 
-        <!-- Contract History / Dashboard Table -->
+        <!-- Contract History Dashboard -->
         <section class="bg-white rounded-2xl shadow-xl p-5 md:p-8 border border-slate-100 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3 border-slate-200">
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 border-slate-200">
                 <h2 class="text-base md:text-lg font-bold text-indigo-900 flex items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> သိမ်းဆည်းထားသော စာချုပ်မှတ်တမ်းများ
                 </h2>
-                <button onclick="loadContracts()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-700">
-                    <i class="fa-solid fa-rotate"></i> ပြန်လည်ရယူမည်
-                </button>
+                
+                <!-- Search Input -->
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <input type="text" id="searchInput" onkeyup="filterContracts()" placeholder="အမည် သို့ ဖုန်းနံပါတ်ဖြင့် ရှာမည်..." class="p-2 border border-slate-300 rounded-lg text-xs outline-none w-full md:w-48">
+                    <button onclick="loadContracts()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg text-slate-700">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-xs text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700 border-b">
-                            <th class="p-3">ရောင်းသူ</th>
-                            <th class="p-3">ပစ္စည်း</th>
-                            <th class="p-3">စုစုပေါင်းငွေ</th>
-                            <th class="p-3">နောက်ဆုံးရက်</th>
-                            <th class="p-3 text-center">လုပ်ဆောင်ချက်</th>
+                            <th class="p-2.5">ရောင်းသူ/ဖုန်း</th>
+                            <th class="p-2.5">ပစ္စည်း</th>
+                            <th class="p-2.5">စုစုပေါင်းငွေ</th>
+                            <th class="p-2.5">နောက်ဆုံးရက်</th>
+                            <th class="p-2.5 text-center">အခြေအနေ</th>
+                            <th class="p-2.5 text-center">လုပ်ဆောင်ချက်</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody" class="divide-y">
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-slate-400">မှတ်တမ်းများ ရယူနေပါသည်...</td>
+                            <td colspan="6" class="p-4 text-center text-slate-400">မှတ်တမ်းများ ရယူနေပါသည်...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -186,6 +197,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let allContractsData = []; // Local Search အတွက် သိမ်းထားရန်
+
         document.getElementById('tradeDate').valueAsDate = new Date();
 
         window.calculateDetails = () => {
@@ -216,36 +229,32 @@
             }
         };
 
-        // စာချုပ် Copy ကူးပေးသည့် Function
         window.copyContractToClipboard = () => {
             const text = `--- Quick TradeIn စာချုပ် ---
-ရောင်းသူ: ${document.getElementById('sellerName').value} (${document.getElementById('sellerNrc').value})
+ရောင်းသူ: ${document.getElementById('sellerName').value} (${document.getElementById('sellerPhone').value})
+မှတ်ပုံတင်: ${document.getElementById('sellerNrc').value}
 လိပ်စာ: ${document.getElementById('sellerAddress').value}
 ပစ္စည်း: ${document.getElementById('itemName').value}
 ရောင်းချငွေ: ${document.getElementById('payoutAmount').value} ကျပ်
 ဝန်ဆောင်ခ (၈%): ${document.getElementById('feeDisplay').innerText}
 ပြန်လည်ဝယ်ယူရမည့် စုစုပေါင်း: ${document.getElementById('totalDisplay').innerText}
 ရောင်းချသည့်နေ့: ${document.getElementById('tradeDate').value}
-နောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}
-လက်မှတ်: ${document.getElementById('typedSignature').value}`;
+နောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}`;
 
             navigator.clipboard.writeText(text);
-            alert('စာချုပ်အချက်အလက်များကို Copy ကူးပြီးပါပြီ။ Viber/SMS ထဲတွင် Paste လုပ်၍ ပေးပို့နိုင်ပါသည်။');
+            alert('စာချုပ်အချက်အလက်များကို Copy ကူးပြီးပါပြီ။');
         };
 
-        // စာချုပ် Share လုပ်ပေးသည့် Function
         window.shareContract = async () => {
             const text = `Quick TradeIn စာချုပ်\nရောင်းသူ: ${document.getElementById('sellerName').value}\nပစ္စည်း: ${document.getElementById('itemName').value}\nပြန်လည်ဝယ်ယူရမည့်ငွေ: ${document.getElementById('totalDisplay').innerText}\nနောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}`;
             if (navigator.share) {
-                try {
-                    await navigator.share({ title: 'Quick TradeIn စာချုပ်', text: text });
-                } catch (e) { console.log('Share canceled'); }
+                try { await navigator.share({ title: 'Quick TradeIn စာချုပ်', text: text }); } catch (e) {}
             } else {
                 copyContractToClipboard();
             }
         };
 
-        // Firestore ထဲသို့ စာချုပ် အသစ်ထည့်ခြင်း / ပြင်ဆင်ခြင်း
+        // Form Submit
         document.getElementById('contractForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -259,6 +268,7 @@
 
                 const contractData = {
                     sellerName: document.getElementById('sellerName').value,
+                    sellerPhone: document.getElementById('sellerPhone').value,
                     sellerNrc: document.getElementById('sellerNrc').value,
                     sellerAddress: document.getElementById('sellerAddress').value,
                     itemName: document.getElementById('itemName').value,
@@ -272,14 +282,13 @@
                 };
 
                 if (editId) {
-                    // Update
                     await updateDoc(doc(db, "contracts", editId), contractData);
                     alert('စာချုပ်ကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။');
                     document.getElementById('editDocId').value = '';
                     document.getElementById('submitBtnText').innerText = 'စာချုပ်အား သိမ်းဆည်းမည်';
                     document.getElementById('formModeText').innerText = '';
                 } else {
-                    // New Create
+                    contractData.status = "ACTIVE"; // ပုံမှန်အားဖြင့် ACTIVE
                     contractData.createdAt = serverTimestamp();
                     await addDoc(collection(db, "contracts"), contractData);
                     alert('စာချုပ်အသစ်ကို သိမ်းဆည်းပြီးပါပြီ။');
@@ -293,55 +302,108 @@
             }
         });
 
-        // စာချုပ်မှတ်တမ်းများ Firestore မှ ဆွဲယူပြသခြင်း
+        // Load Contracts
         window.loadContracts = async () => {
             const tbody = document.getElementById('historyTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> ရယူနေပါသည်...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> ရယူနေပါသည်...</td></tr>';
 
             try {
                 const q = query(collection(db, "contracts"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">စာချုပ်မှတ်တမ်း မရှိသေးပါ။</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">စာချုပ်မှတ်တမ်း မရှိသေးပါ။</td></tr>';
                     return;
                 }
 
-                let html = '';
+                allContractsData = [];
                 querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    html += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="p-3 font-semibold">${data.sellerName}</td>
-                            <td class="p-3">${data.itemName}</td>
-                            <td class="p-3 font-bold text-emerald-600">${(data.totalBuybackAmount || 0).toLocaleString()} ကျပ်</td>
-                            <td class="p-3 text-slate-500">${data.dueDate || '-'}</td>
-                            <td class="p-3 text-center space-x-2">
-                                <button onclick="editContract('${docSnap.id}', '${data.sellerName}', '${data.sellerNrc}', '${data.sellerAddress}', '${data.itemName}', ${data.payoutAmount}, '${data.tradeDate}')" class="text-indigo-600 hover:text-indigo-900 font-semibold">
-                                    <i class="fa-solid fa-pen-to-square"></i> ပြင်မည်
-                                </button>
-                                <button onclick="deleteContract('${docSnap.id}')" class="text-red-500 hover:text-red-700 font-semibold">
-                                    <i class="fa-solid fa-trash"></i> ဖျက်မည်
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+                    allContractsData.push({ id: docSnap.id, ...docSnap.data() });
                 });
-                tbody.innerHTML = html;
+
+                renderTable(allContractsData);
             } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Error: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error: ${error.message}</td></tr>`;
             }
         };
 
-        // စာချုပ် ပြင်ဆင်ရန် Form ထဲသို့ အချက်အလက်များ ပြန်ဖြည့်ပေးခြင်း
-        window.editContract = (id, sellerName, sellerNrc, sellerAddress, itemName, payoutAmount, tradeDate) => {
-            document.getElementById('editDocId').value = id;
-            document.getElementById('sellerName').value = sellerName;
-            document.getElementById('sellerNrc').value = sellerNrc;
-            document.getElementById('sellerAddress').value = sellerAddress;
-            document.getElementById('itemName').value = itemName;
-            document.getElementById('payoutAmount').value = payoutAmount;
-            document.getElementById('tradeDate').value = tradeDate;
+        // Render Table Data
+        function renderTable(dataArray) {
+            const tbody = document.getElementById('historyTableBody');
+            if (dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">ရှာဖွေမှုမတွေ့ပါ။</td></tr>';
+                return;
+            }
+
+            let html = '';
+            dataArray.forEach((item) => {
+                const isCompleted = item.status === "COMPLETED";
+                const statusBadge = isCompleted 
+                    ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">ဝယ်ယူပြီး</span>`
+                    : `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold">စောင့်ဆိုင်းဆဲ</span>`;
+
+                html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2.5">
+                            <div class="font-semibold">${item.sellerName}</div>
+                            <div class="text-[10px] text-slate-400">${item.sellerPhone || '-'}</div>
+                        </td>
+                        <td class="p-2.5">${item.itemName}</td>
+                        <td class="p-2.5 font-bold text-emerald-600">${(item.totalBuybackAmount || 0).toLocaleString()} ကျပ်</td>
+                        <td class="p-2.5 text-slate-500">${item.dueDate || '-'}</td>
+                        <td class="p-2.5 text-center">${statusBadge}</td>
+                        <td class="p-2.5 text-center space-x-1">
+                            <button onclick="toggleStatus('${item.id}', '${item.status}')" class="text-xs ${isCompleted ? 'text-amber-600' : 'text-emerald-600'} hover:underline font-semibold">
+                                ${isCompleted ? 'မပြီးသေးဘုို့ပြောင်း' : 'ဝယ်ယူပြီးပြောင်း'}
+                            </button> | 
+                            <button onclick="editContract('${item.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                ပြင်
+                            </button> | 
+                            <button onclick="deleteContract('${item.id}')" class="text-red-500 hover:text-red-700 font-semibold">
+                                ဖျက်
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Search Filter Function
+        window.filterContracts = () => {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allContractsData.filter(item => 
+                (item.sellerName && item.sellerName.toLowerCase().includes(searchText)) ||
+                (item.sellerPhone && item.sellerPhone.includes(searchText)) ||
+                (item.itemName && item.itemName.toLowerCase().includes(searchText))
+            );
+            renderTable(filtered);
+        };
+
+        // Status Toggle (COMPLETED / ACTIVE)
+        window.toggleStatus = async (id, currentStatus) => {
+            const newStatus = currentStatus === "COMPLETED" ? "ACTIVE" : "COMPLETED";
+            try {
+                await updateDoc(doc(db, "contracts", id), { status: newStatus });
+                loadContracts();
+            } catch (e) {
+                alert("Status ပြောင်း၍ မရပါ: " + e.message);
+            }
+        };
+
+        // Edit Contract
+        window.editContract = (id) => {
+            const item = allContractsData.find(c => c.id === id);
+            if (!item) return;
+
+            document.getElementById('editDocId').value = item.id;
+            document.getElementById('sellerName').value = item.sellerName || '';
+            document.getElementById('sellerPhone').value = item.sellerPhone || '';
+            document.getElementById('sellerNrc').value = item.sellerNrc || '';
+            document.getElementById('sellerAddress').value = item.sellerAddress || '';
+            document.getElementById('itemName').value = item.itemName || '';
+            document.getElementById('payoutAmount').value = item.payoutAmount || 0;
+            document.getElementById('tradeDate').value = item.tradeDate || '';
 
             calculateDetails();
             autoUpdateSignature();
@@ -351,12 +413,11 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // စာချုပ် ဖျက်ပစ်ခြင်း
+        // Delete Contract
         window.deleteContract = async (id) => {
             if (confirm('ဤစာချုပ်မှတ်တမ်းကို ဖျက်ပစ်ရန် သေချာပါသလား။')) {
                 try {
                     await deleteDoc(doc(db, "contracts", id));
-                    alert('စာချုပ်အား ဖျက်ပစ်ပြီးပါပြီ။');
                     loadContracts();
                 } catch (error) {
                     alert('ဖျက်၍ မရပါ: ' + error.message);
@@ -367,7 +428,6 @@
         window.openTermsModal = () => document.getElementById('termsModal').classList.remove('hidden');
         window.closeTermsModal = () => document.getElementById('termsModal').classList.add('hidden');
 
-        // စာမျက်နှာပွင့်သည်နှင့် မှတ်တမ်းများ အလိုအလျောက် ဆွဲယူမည်
         loadContracts();
     </script>
 </body>
