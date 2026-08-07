@@ -8,11 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Signature Pad CDN for Digital Signature -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
-        body {
-            font-family: 'Padauk', sans-serif;
-        }
+        body { font-family: 'Padauk', sans-serif; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -24,139 +24,214 @@
                 <i class="fa-solid fa-arrows-rotate text-emerald-400 text-2xl"></i>
                 <span class="text-xl font-bold tracking-wide">Quick TradeIn</span>
             </div>
-            <div class="space-x-4">
-                <button onclick="openTermsModal()" class="text-sm bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600 transition">
-                    စည်းကမ်းချက်များ
-                </button>
-            </div>
+            <button onclick="openTermsModal()" class="text-sm bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600 transition">
+                စည်းကမ်းချက်များ
+            </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-16 px-4">
-        <div class="max-w-4xl mx-auto text-center space-y-4">
-            <h1 class="text-3xl md:text-5xl font-bold leading-relaxed">
-                ပိုင်ဆိုင်မှုများကို လျှင်မြန်စွာ လဲလှယ်/ရောင်းချ၍ ပြန်လည်ဝယ်ယူနိုင်သည့် စနစ်
-            </h1>
-            <p class="text-indigo-200 text-lg md:text-xl max-w-2xl mx-auto">
-                Quick TradeIn သည် ပစ္စည်းများကို စနစ်တကျ ခေတ္တလွှဲပြောင်းထားရှိပြီး (၃၀) ရက်အတွင်း သက်သာသော ဝန်ဆောင်ခ (၈%) ဖြင့် ပြန်လည်ဝယ်ယူနိုင်သော စမတ်စနစ် ဖြစ်ပါသည်။
-            </p>
-        </div>
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-12 px-4 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold">Quick TradeIn စာချုပ်သစ် ဖန်တီးရန်</h1>
+        <p class="text-indigo-200 mt-2">အရောင်းအဝယ်နှင့် ပြန်လည်ဝယ်ယူခွင့် (Buy-back Option) စမတ်စာချုပ်</p>
     </header>
 
-    <!-- Interactive Buy-Back Calculator -->
-    <section class="max-w-3xl mx-auto px-4 -mt-10 relative z-10">
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-slate-100">
-            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-calculator text-indigo-600"></i>
-                ပြန်လည်ဝယ်ယူခွင့် ပမာဏ တွက်ချက်ရန်
+    <!-- Main Contract Form -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <form id="contractForm" class="bg-white rounded-2xl shadow-xl p-6 md:p-8 space-y-6 border border-slate-100">
+            <h2 class="text-xl font-bold text-indigo-900 border-b pb-3 border-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-file-signature text-indigo-600"></i> ရောင်းချသူနှင့် ပစ္စည်းအချက်အလက်များ
             </h2>
 
-            <div class="space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+                <!-- ရောင်းသူအမည် -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">ပစ္စည်းအတွက် လက်ခံရရှိမည့် ငွေပမာဏ (ကျပ်)</label>
-                    <input type="number" id="payoutInput" placeholder="ဥပမာ - 500000" 
-                           class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-lg">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းသူအမည် *</label>
+                    <input type="text" id="sellerName" required placeholder="ဥပမာ - ဦးမောင်မောင်" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-200">
-                    <div class="flex justify-between text-sm text-slate-600">
-                        <span>ဝန်ဆောင်ခ (Buy-back Fee - 8%):</span>
-                        <span id="feeResult" class="font-semibold text-slate-800">0 ကျပ်</span>
-                    </div>
-                    <div class="flex justify-between text-base font-bold text-indigo-900 pt-2 border-t border-slate-200">
-                        <span>(၃၀) ရက်အတွင်း ပြန်လည်ဝယ်ယူရမည့် စုစုပေါင်း:</span>
-                        <span id="totalResult" class="text-emerald-600">0 ကျပ်</span>
-                    </div>
+                <!-- မှတ်ပုံတင် -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">မှတ်ပုံတင်အမှတ် *</label>
+                    <input type="text" id="sellerNrc" required placeholder="ဥပမာ - ၁၂/အဟက(နိုင်)၁၂၃၄၅၆" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
-
-                <button onclick="calculateBuyback()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-md">
-                    တွက်ချက်မည်
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Key Features -->
-    <section class="max-w-5xl mx-auto px-4 py-16">
-        <h2 class="text-2xl font-bold text-center mb-10 text-slate-800">Quick TradeIn ၏ ဝန်ဆောင်မှု အားသာချက်များ</h2>
-        
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-3">
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-xl">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h3 class="font-bold text-lg">E-KYC စနစ်</h3>
-                <p class="text-sm text-slate-600">မှတ်ပုံတင်နှင့် ပစ္စည်းအထောက်အထားများကို စနစ်တကျ Digital စနစ်ဖြင့် သိမ်းဆည်းပေးပါသည်။</p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-3">
-                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
-                    <i class="fa-solid fa-file-contract"></i>
-                </div>
-                <h3 class="font-bold text-lg">Digital စာချုပ်</h3>
-                <p class="text-sm text-slate-600">ဖုန်းစခရင်ပေါ်တွင် တိုက်ရိုက် Digital Signature ရေးထိုး၍ ခိုင်မာစွာ ဆောင်ရွက်နိုင်ပါသည်။</p>
+            <!-- နေရပ်လိပ်စာ -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">နေရပ်လိပ်စာ *</label>
+                <textarea id="sellerAddress" rows="2" required placeholder="အိမ်အမှတ်၊ လမ်း၊ ရပ်ကွက်၊ မြို့နယ်" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-3">
-                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl">
-                    <i class="fa-solid fa-percent"></i>
-                </div>
-                <h3 class="font-bold text-lg">သက်သာသော ဝန်ဆောင်ခ</h3>
-                <p class="text-sm text-slate-600">တစ်လလျှင် ဝန်ဆောင်ခ ၈% သာ သတ်မှတ်ထားပြီး သက်တမ်းတိုးခွင့်လည်း ရှိပါသည်။</p>
+            <!-- ရောင်းချသည့် ပစ္စည်းအမျိုးအမည် -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့် ပစ္စည်းအမျိုးအမည်နှင့် စီးရီးနံပါတ် *</label>
+                <input type="text" id="itemName" required placeholder="ဥပမာ - iPhone 13 Pro Max (IMEI: 356789...)" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
-        </div>
-    </section>
 
-    <!-- Terms & Conditions Modal -->
+            <div class="grid md:grid-cols-2 gap-4">
+                <!-- ရောင်းချသည့် ပမာဏ -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့် ပမာဏ (ကျပ်) *</label>
+                    <input type="number" id="payoutAmount" oninput="calculateDetails()" required placeholder="500000" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <!-- ရောင်းချသည့်နေ့စွဲ -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့်နေ့စွဲ *</label>
+                    <input type="date" id="tradeDate" onchange="calculateDetails()" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <!-- အလိုအလျောက် တွက်ချက်ပေးသည့် အကွက်များ -->
+            <div class="bg-indigo-50/70 p-4 rounded-xl space-y-2 border border-indigo-100">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-600">ဝန်ဆောင်ခ (၈%):</span>
+                    <span id="feeDisplay" class="font-bold text-slate-800">0 ကျပ်</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-600">ပြန်လည်ဝယ်ယူရန် နောက်ဆုံးရက် (ရက်ပေါင်း ၃၀):</span>
+                    <span id="dueDateDisplay" class="font-bold text-slate-800">-</span>
+                </div>
+                <div class="flex justify-between text-base font-bold text-indigo-900 pt-2 border-t border-indigo-200">
+                    <span>စုစုပေါင်း ပြန်လည်ဝယ်ယူရမည့် ငွေပမာဏ:</span>
+                    <span id="totalDisplay" class="text-emerald-600">0 ကျပ်</span>
+                </div>
+            </div>
+
+            <!-- Digital Signature Pad -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-sm font-medium text-slate-700">ရောင်းသူ လက်မှတ်/သဘောတူညီချက် *</label>
+                    <button type="button" onclick="clearSignature()" class="text-xs text-red-500 hover:underline">ပြန်ရေးမည်</button>
+                </div>
+                <div class="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex justify-center">
+                    <canvas id="signatureCanvas" class="w-full h-40 rounded-xl cursor-crosshair"></canvas>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex justify-center items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i> စာချုပ်အား Firestore တွင် သိမ်းဆည်းမည်
+            </button>
+        </form>
+    </main>
+
+    <!-- Terms Modal -->
     <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold text-indigo-900">Quick TradeIn စည်းကမ်းသတ်မှတ်ချက်များ</h3>
-                <button onclick="closeTermsModal()" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
-            </div>
-            
-            <div class="text-sm text-slate-600 space-y-3 leading-relaxed">
-                <p><b>၁။ စာချုပ်သဘာဝ -</b> ဤဝန်ဆောင်မှုသည် အတိုးကြီးစား ငွေချေးခြင်းမဟုတ်ဘဲ ပစ္စည်းအား အရောင်းအဝယ်ပြုလုပ်၍ (၃၀) ရက်အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူခွင့် (Buy-back Option) ပေးထားသော စနစ်ဖြစ်ပါသည်။</p>
-                <p><b>၂။ ပိုင်ဆိုင်မှု -</b> ရောင်းချသူသည် ပစ္စည်း၏ မူလပိုင်ရှင်စစ်မှန်ကြောင်း အာမခံရမည်။ ခိုးရာပါ/တရားမဝင်ပစ္စည်း ဖြစ်ပါက ရောင်းချသူမှ ဥပဒေအတိုင်း တာဝန်ယူရမည်။</p>
-                <p><b>၃။ ပြန်လည်ဝယ်ယူခြင်း -</b> ရက်ပေါင်း (၃၀) အတွင်း သတ်မှတ်ထားသော ပမာဏကို ပေးေချ၍ ပစ္စည်းအား ပြန်လည်ဝယ်ယူ ထုတ်ယူနိုင်ပါသည်။</p>
-                <p><b>၄။ ပစ္စည်းလွှဲပြောင်းခြင်း -</b> ရက်ပေါင်း (၃၀) ကျော်လွန်သည်အထိ ပြန်လည်ဝယ်ယူခြင်း သို့မဟုတ် သက်တမ်းတိုးခြင်း မပြုလုပ်ပါက ပစ္စည်းအား စိတ်ကြိုက် ပြန်လည်ရောင်းချပိုင်ခွင့် ရှိပါသည်။</p>
-            </div>
-
-            <div class="pt-3 border-t flex justify-end">
-                <button onclick="closeTermsModal()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700">
-                    လက်ခံပါသည်
-                </button>
-            </div>
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-indigo-900 border-b pb-2"> Quick TradeIn စည်းကမ်းချက်များ</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">၁။ ဤစာချုပ်သည် အရောင်းအဝယ်ပြုလုပ်၍ ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူခွင့်ပေးသော စာချုပ်ဖြစ်ပါသည်။<br>၂။ ရက်ပေါင်း (၃၀) ကျော်လွန်ပါက ပစ္စည်းအား စိတ်ကြိုက် ပြန်လည်ရောင်းချပိုင်ခွင့် ရှိပါသည်။</p>
+            <button onclick="closeTermsModal()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-semibold">လက်ခံပါသည်</button>
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        function calculateBuyback() {
-            const amount = parseFloat(document.getElementById('payoutInput').value);
-            if (isNaN(amount) || amount <= 0) {
-                alert('ကျေးဇူးပြု၍ မှန်ကန်သော ငွေပမာဏ ရိုက်ထည့်ပါ။');
-                return;
-            }
-            
+    <!-- Firebase SDK (v10 JS Moduled via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // အသုံးပြုသူ ပေးပို့ထားသော Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
+            authDomain: "quick-tradein-app.firebaseapp.com",
+            databaseURL: "https://quick-tradein-app-default-rtdb.firebaseio.com",
+            projectId: "quick-tradein-app",
+            storageBucket: "quick-tradein-app.firebasestorage.app",
+            messagingSenderId: "1045062546373",
+            appId: "1:1045062546373:web:ef23268eaa76330daa91ac",
+            measurementId: "G-PYWJ781099"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Canvas Setup for Signature Pad
+        const canvas = document.getElementById('signatureCanvas');
+        const signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgb(248, 250, 252)' });
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        window.clearSignature = () => signaturePad.clear();
+
+        // နေ့စွဲအလိုအလျောက် သတ်မှတ်ခြင်း
+        document.getElementById('tradeDate').valueAsDate = new Date();
+
+        // တွက်ချက်မှု Logic
+        window.calculateDetails = () => {
+            const amount = parseFloat(document.getElementById('payoutAmount').value) || 0;
             const fee = amount * 0.08;
             const total = amount + fee;
 
-            document.getElementById('feeResult').innerText = fee.toLocaleString() + ' ကျပ်';
-            document.getElementById('totalResult').innerText = total.toLocaleString() + ' ကျပ်';
-        }
+            document.getElementById('feeDisplay').innerText = fee.toLocaleString() + ' ကျပ်';
+            document.getElementById('totalDisplay').innerText = total.toLocaleString() + ' ကျပ်';
 
-        function openTermsModal() {
-            document.getElementById('termsModal').classList.remove('hidden');
-        }
+            const tradeDateVal = document.getElementById('tradeDate').value;
+            if (tradeDateVal) {
+                const date = new Date(tradeDateVal);
+                date.setDate(date.getDate() + 30);
+                document.getElementById('dueDateDisplay').innerText = date.toISOString().split('T')[0];
+            }
+        };
+        calculateDetails();
 
-        function closeTermsModal() {
-            document.getElementById('termsModal').classList.add('hidden');
-        }
+        // Firestore ထဲသို့ စာချုပ်အချက်အလက် သိမ်းဆည်းခြင်း
+        document.getElementById('contractForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (signaturePad.isEmpty()) {
+                alert('ကျေးဇူးပြု၍ ရောင်းသူလက်မှတ် ရေးထိုးပေးပါ။');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> သိမ်းဆည်းနေပါသည်...';
+
+            try {
+                const amount = parseFloat(document.getElementById('payoutAmount').value);
+                const fee = amount * 0.08;
+                const signatureDataUrl = signaturePad.toDataURL(); // Convert Signature to Base64 Image
+
+                await addDoc(collection(db, "contracts"), {
+                    sellerName: document.getElementById('sellerName').value,
+                    sellerNrc: document.getElementById('sellerNrc').value,
+                    sellerAddress: document.getElementById('sellerAddress').value,
+                    itemName: document.getElementById('itemName').value,
+                    payoutAmount: amount,
+                    feeAmount: fee,
+                    totalBuybackAmount: amount + fee,
+                    tradeDate: document.getElementById('tradeDate').value,
+                    dueDate: document.getElementById('dueDateDisplay').innerText,
+                    signatureBase64: signatureDataUrl,
+                    status: "ACTIVE",
+                    createdAt: serverTimestamp()
+                });
+
+                alert('စာချုပ်အချက်အလက်များကို Firestore ထဲသို့ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။');
+                document.getElementById('contractForm').reset();
+                signaturePad.clear();
+                calculateDetails();
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("အချက်အလက်သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> စာချုပ်အား Firestore တွင် သိမ်းဆည်းမည်';
+            }
+        });
+
+        window.openTermsModal = () => document.getElementById('termsModal').classList.remove('hidden');
+        window.closeTermsModal = () => document.getElementById('termsModal').classList.add('hidden');
     </script>
 </body>
-      </html>
-  
+                    </html>
+    
