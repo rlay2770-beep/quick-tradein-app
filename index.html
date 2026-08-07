@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick TradeIn - စမတ်စာချုပ်</title>
+    <title>Quick TradeIn - စမတ်စာချုပ်နှင့် မှတ်တမ်းစနစ်</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
         body { font-family: 'Padauk', sans-serif; }
-        @media print {
-            .no-print { display: none !important; }
-        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 text-slate-800 pb-12">
 
-    <!-- Navigation Bar (ဖုန်းမျက်နှာပြင်အတွက် သေသပ်စွာ ပြင်ဆင်ထားသည်) -->
-    <nav class="bg-indigo-900 text-white shadow-md sticky top-0 z-50 no-print">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+    <!-- Navigation Bar -->
+    <nav class="bg-indigo-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-arrows-rotate text-emerald-400 text-xl"></i>
                 <span class="text-lg font-bold tracking-wide">Quick TradeIn</span>
             </div>
-            <div class="flex gap-2">
-                <button onclick="openTermsModal()" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600">
-                    စည်းကမ်းချက်များ
-                </button>
-                <button onclick="window.print()" class="text-xs bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1">
-                    <i class="fa-solid fa-print"></i> Print ထုတ်မည်
-                </button>
-            </div>
+            <button onclick="openTermsModal()" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600">
+                စည်းကမ်းချက်များ
+            </button>
         </div>
     </nav>
 
     <!-- Header Section -->
-    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-8 px-4 text-center">
-        <h1 class="text-xl md:text-3xl font-bold">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</h1>
-        <p class="text-indigo-200 mt-1 text-xs md:text-sm">Quick TradeIn Smart Asset Buy-back Agreement</p>
+    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-6 px-4 text-center">
+        <h1 class="text-xl md:text-2xl font-bold">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</h1>
+        <p class="text-indigo-200 mt-1 text-xs">Quick TradeIn Smart Asset Buy-back System</p>
     </header>
 
-    <!-- Main Form -->
-    <main class="max-w-3xl mx-auto px-4 py-6">
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        
+        <!-- Contract Form -->
         <form id="contractForm" class="bg-white rounded-2xl shadow-xl p-5 md:p-8 space-y-5 border border-slate-100">
-            <h2 class="text-base md:text-lg font-bold text-indigo-900 border-b pb-2 border-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-file-contract text-indigo-600"></i> ရောင်းချသူနှင့် ပစ္စည်းအချက်အလက်များ
+            <input type="hidden" id="editDocId" value=""> <!-- ပြင်ဆင်သည့်အခါ သုံးရန် -->
+
+            <h2 class="text-base md:text-lg font-bold text-indigo-900 border-b pb-2 border-slate-200 flex items-center justify-between">
+                <span><i class="fa-solid fa-file-contract text-indigo-600"></i> စာချုပ် အချက်အလက်များ</span>
+                <span id="formModeText" class="text-xs text-emerald-600 font-normal"></span>
             </h2>
 
             <div class="grid md:grid-cols-2 gap-4">
@@ -82,12 +78,12 @@
             </div>
 
             <!-- အလိုအလျောက် တွက်ချက်သည့် အပိုင်း -->
-            <div class="bg-indigo-50/70 p-4 rounded-xl space-y-2 border border-indigo-100">
-                <div class="flex justify-between text-sm">
+            <div class="bg-indigo-50/70 p-4 rounded-xl space-y-2 border border-indigo-100 text-sm">
+                <div class="flex justify-between">
                     <span class="text-slate-600">ဝန်ဆောင်ခ (၈%):</span>
                     <span id="feeDisplay" class="font-bold text-slate-800">၁၆,၀၀၀ ကျပ်</span>
                 </div>
-                <div class="flex justify-between text-sm">
+                <div class="flex justify-between">
                     <span class="text-slate-600">ပြန်လည်ဝယ်ယူရန် နောက်ဆုံးရက် (ရက်ပေါင်း ၃၀):</span>
                     <span id="dueDateDisplay" class="font-bold text-slate-800">2026-09-06</span>
                 </div>
@@ -97,47 +93,84 @@
                 </div>
             </div>
 
-            <!-- အလိုအလျောက် လက်မှတ်ထိုးပေးမည့် Checkbox အပိုင်း -->
+            <!-- Checkbox Signature -->
             <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200 space-y-3">
-                <label class="block text-sm font-bold text-slate-800">ရောင်းသူ၏ သဘောတူညီချက် အတည်ပြုခြင်း *</label>
-                
                 <div class="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" id="agreeConsent" onchange="autoUpdateSignature()" required class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
+                    <input type="checkbox" id="agreeConsent" onchange="autoUpdateSignature()" required class="mt-1 w-5 h-5 text-indigo-600 rounded">
                     <label for="agreeConsent" class="text-xs text-slate-700 leading-relaxed cursor-pointer select-none">
                         အထက်ပါ စည်းကမ်းချက်များနှင့် ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူမည့် အချက်များကို သဘောတူပါသဖြင့် အမှန်ခြစ်၍ အီလက်ထရောနစ် လက်မှတ်ရေးထိုးပါသည်-
                     </label>
                 </div>
 
-                <div>
-                    <input type="text" id="typedSignature" readonly placeholder="အထက်ပါ အမှန်ခြစ်ကို နှိပ်ပါက အလိုအလျောက် လက်မှတ်ထိုးပါမည်" class="w-full p-3 text-sm font-semibold border border-slate-300 rounded-lg outline-none bg-slate-100 text-indigo-900">
-                </div>
+                <input type="text" id="typedSignature" readonly placeholder="အမှန်ခြစ်ပါက အလိုအလျောက် လက်မှတ်ထိုးပါမည်" class="w-full p-2.5 text-xs font-semibold border border-slate-300 rounded-lg outline-none bg-slate-100 text-indigo-900">
             </div>
 
-            <!-- Submit Button -->
-            <div class="space-y-3 no-print">
+            <!-- Buttons: Save, Copy & Share -->
+            <div class="space-y-2">
                 <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-floppy-disk"></i> စာချုပ်အား သိမ်းဆည်းမည်
+                    <i class="fa-solid fa-floppy-disk"></i> <span id="submitBtnText">စာချုပ်အား သိမ်းဆည်းမည်</span>
                 </button>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="copyContractToClipboard()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i> စာချုပ် Copy ကူးမည်
+                    </button>
+                    <button type="button" onclick="shareContract()" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-share-nodes"></i> စာချုပ် Share လုပ်မည်
+                    </button>
+                </div>
             </div>
         </form>
+
+        <!-- Contract History / Dashboard Table -->
+        <section class="bg-white rounded-2xl shadow-xl p-5 md:p-8 border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3 border-slate-200">
+                <h2 class="text-base md:text-lg font-bold text-indigo-900 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> သိမ်းဆည်းထားသော စာချုပ်မှတ်တမ်းများ
+                </h2>
+                <button onclick="loadContracts()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-slate-700">
+                    <i class="fa-solid fa-rotate"></i> ပြန်လည်ရယူမည်
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 border-b">
+                            <th class="p-3">ရောင်းသူ</th>
+                            <th class="p-3">ပစ္စည်း</th>
+                            <th class="p-3">စုစုပေါင်းငွေ</th>
+                            <th class="p-3">နောက်ဆုံးရက်</th>
+                            <th class="p-3 text-center">လုပ်ဆောင်ချက်</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y">
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-slate-400">မှတ်တမ်းများ ရယူနေပါသည်...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <!-- Terms Modal -->
-    <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
+    <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <h3 class="text-lg font-bold text-indigo-900 border-b pb-2">Quick TradeIn စည်းကမ်းချက်များ</h3>
             <div class="text-sm text-slate-600 space-y-2 leading-relaxed">
                 <p>၁။ ဤစာချုပ်သည် အရောင်းအဝယ်ပြုလုပ်၍ ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူခွင့်ပေးသော စနစ်ဖြစ်ပါသည်။</p>
                 <p>၂။ ရက်ပေါင်း (၃၀) ကျော်လွန်ပါက ပစ္စည်းအား စိတ်ကြိုက် ပြန်လည်ရောင်းချပိုင်ခွင့် ရှိပါသည်။</p>
             </div>
-            <button onclick="closeTermsModal()" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-700">လက်ခံပါသည်</button>
+            <button onclick="closeTermsModal()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-semibold">လက်ခံပါသည်</button>
         </div>
     </div>
 
     <!-- Firebase Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
@@ -171,7 +204,6 @@
             }
         };
 
-        // Checkbox နှိပ်လိုက်သည်နှင့် အမည်ဖြင့် အလိုအလျောက် လက်မှတ်ထိုးပေးသည့် Function
         window.autoUpdateSignature = () => {
             const isChecked = document.getElementById('agreeConsent').checked;
             const sellerName = document.getElementById('sellerName').value.trim();
@@ -184,18 +216,48 @@
             }
         };
 
+        // စာချုပ် Copy ကူးပေးသည့် Function
+        window.copyContractToClipboard = () => {
+            const text = `--- Quick TradeIn စာချုပ် ---
+ရောင်းသူ: ${document.getElementById('sellerName').value} (${document.getElementById('sellerNrc').value})
+လိပ်စာ: ${document.getElementById('sellerAddress').value}
+ပစ္စည်း: ${document.getElementById('itemName').value}
+ရောင်းချငွေ: ${document.getElementById('payoutAmount').value} ကျပ်
+ဝန်ဆောင်ခ (၈%): ${document.getElementById('feeDisplay').innerText}
+ပြန်လည်ဝယ်ယူရမည့် စုစုပေါင်း: ${document.getElementById('totalDisplay').innerText}
+ရောင်းချသည့်နေ့: ${document.getElementById('tradeDate').value}
+နောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}
+လက်မှတ်: ${document.getElementById('typedSignature').value}`;
+
+            navigator.clipboard.writeText(text);
+            alert('စာချုပ်အချက်အလက်များကို Copy ကူးပြီးပါပြီ။ Viber/SMS ထဲတွင် Paste လုပ်၍ ပေးပို့နိုင်ပါသည်။');
+        };
+
+        // စာချုပ် Share လုပ်ပေးသည့် Function
+        window.shareContract = async () => {
+            const text = `Quick TradeIn စာချုပ်\nရောင်းသူ: ${document.getElementById('sellerName').value}\nပစ္စည်း: ${document.getElementById('itemName').value}\nပြန်လည်ဝယ်ယူရမည့်ငွေ: ${document.getElementById('totalDisplay').innerText}\nနောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}`;
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'Quick TradeIn စာချုပ်', text: text });
+                } catch (e) { console.log('Share canceled'); }
+            } else {
+                copyContractToClipboard();
+            }
+        };
+
+        // Firestore ထဲသို့ စာချုပ် အသစ်ထည့်ခြင်း / ပြင်ဆင်ခြင်း
         document.getElementById('contractForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const btn = document.getElementById('submitBtn');
+            const editId = document.getElementById('editDocId').value;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> သိမ်းဆည်းနေပါသည်...';
 
             try {
                 const amount = parseFloat(document.getElementById('payoutAmount').value);
                 const fee = amount * 0.08;
 
-                const docRef = await addDoc(collection(db, "contracts"), {
+                const contractData = {
                     sellerName: document.getElementById('sellerName').value,
                     sellerNrc: document.getElementById('sellerNrc').value,
                     sellerAddress: document.getElementById('sellerAddress').value,
@@ -206,23 +268,107 @@
                     tradeDate: document.getElementById('tradeDate').value,
                     dueDate: document.getElementById('dueDateDisplay').innerText,
                     signature: document.getElementById('typedSignature').value,
-                    status: "ACTIVE",
-                    createdAt: serverTimestamp()
-                });
+                    updatedAt: serverTimestamp()
+                };
 
-                alert('စာချုပ်အချက်အလက်များကို အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။');
-                window.print();
+                if (editId) {
+                    // Update
+                    await updateDoc(doc(db, "contracts", editId), contractData);
+                    alert('စာချုပ်ကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။');
+                    document.getElementById('editDocId').value = '';
+                    document.getElementById('submitBtnText').innerText = 'စာချုပ်အား သိမ်းဆည်းမည်';
+                    document.getElementById('formModeText').innerText = '';
+                } else {
+                    // New Create
+                    contractData.createdAt = serverTimestamp();
+                    await addDoc(collection(db, "contracts"), contractData);
+                    alert('စာချုပ်အသစ်ကို သိမ်းဆည်းပြီးပါပြီ။');
+                }
+
+                loadContracts();
             } catch (error) {
-                alert("Firestore Error: " + error.message + "\n\nကျေးဇူးပြု၍ Firebase Console ရှိ Rules တွင် allow read, write: if true; ပြင်ဆင်ပေးထားပါသလား စစ်ဆေးပါ။");
+                alert("Error: " + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> စာချုပ်အား သိမ်းဆည်းမည်';
             }
         });
 
+        // စာချုပ်မှတ်တမ်းများ Firestore မှ ဆွဲယူပြသခြင်း
+        window.loadContracts = async () => {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> ရယူနေပါသည်...</td></tr>';
+
+            try {
+                const q = query(collection(db, "contracts"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">စာချုပ်မှတ်တမ်း မရှိသေးပါ။</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    html += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-semibold">${data.sellerName}</td>
+                            <td class="p-3">${data.itemName}</td>
+                            <td class="p-3 font-bold text-emerald-600">${(data.totalBuybackAmount || 0).toLocaleString()} ကျပ်</td>
+                            <td class="p-3 text-slate-500">${data.dueDate || '-'}</td>
+                            <td class="p-3 text-center space-x-2">
+                                <button onclick="editContract('${docSnap.id}', '${data.sellerName}', '${data.sellerNrc}', '${data.sellerAddress}', '${data.itemName}', ${data.payoutAmount}, '${data.tradeDate}')" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                    <i class="fa-solid fa-pen-to-square"></i> ပြင်မည်
+                                </button>
+                                <button onclick="deleteContract('${docSnap.id}')" class="text-red-500 hover:text-red-700 font-semibold">
+                                    <i class="fa-solid fa-trash"></i> ဖျက်မည်
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Error: ${error.message}</td></tr>`;
+            }
+        };
+
+        // စာချုပ် ပြင်ဆင်ရန် Form ထဲသို့ အချက်အလက်များ ပြန်ဖြည့်ပေးခြင်း
+        window.editContract = (id, sellerName, sellerNrc, sellerAddress, itemName, payoutAmount, tradeDate) => {
+            document.getElementById('editDocId').value = id;
+            document.getElementById('sellerName').value = sellerName;
+            document.getElementById('sellerNrc').value = sellerNrc;
+            document.getElementById('sellerAddress').value = sellerAddress;
+            document.getElementById('itemName').value = itemName;
+            document.getElementById('payoutAmount').value = payoutAmount;
+            document.getElementById('tradeDate').value = tradeDate;
+
+            calculateDetails();
+            autoUpdateSignature();
+
+            document.getElementById('submitBtnText').innerText = 'စာချုပ် ပြင်ဆင်ချက်အား အတည်ပြုမည်';
+            document.getElementById('formModeText').innerText = '(စာချုပ် အဟောင်းအား ပြင်ဆင်နေပါသည်)';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // စာချုပ် ဖျက်ပစ်ခြင်း
+        window.deleteContract = async (id) => {
+            if (confirm('ဤစာချုပ်မှတ်တမ်းကို ဖျက်ပစ်ရန် သေချာပါသလား။')) {
+                try {
+                    await deleteDoc(doc(db, "contracts", id));
+                    alert('စာချုပ်အား ဖျက်ပစ်ပြီးပါပြီ။');
+                    loadContracts();
+                } catch (error) {
+                    alert('ဖျက်၍ မရပါ: ' + error.message);
+                }
+            }
+        };
+
         window.openTermsModal = () => document.getElementById('termsModal').classList.remove('hidden');
         window.closeTermsModal = () => document.getElementById('termsModal').classList.add('hidden');
+
+        // စာမျက်နှာပွင့်သည်နှင့် မှတ်တမ်းများ အလိုအလျောက် ဆွဲယူမည်
+        loadContracts();
     </script>
 </body>
-                        </html>
-                    
+</html>
