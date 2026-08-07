@@ -3,735 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick TradeIn - စမတ်စာချုပ်နှင့် မှတ်တမ်းစနစ်</title>
+    <title>Quick TradeIn - Smart Asset Buy-back System</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- PDF & QR Code Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- QR Code Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
-        body { font-family: 'Padauk', sans-serif; }
-
-        .voucher-box {
-            width: 100%;
-            max-width: 550px;
-            margin: 0 auto;
-            background: #ffffff;
-            border: 2px solid #1e1b4b;
-            padding: 15px;
-            box-sizing: border-box;
-            color: #0f172a;
-            position: relative;
-        }
-
         @media print {
-            body * { visibility: hidden; }
-            #voucherPrintArea, #voucherPrintArea * { visibility: visible; }
-            #voucherPrintArea {
+            body * {
+                visibility: hidden;
+            }
+            #printableContract, #printableContract * {
+                visibility: visible;
+            }
+            #printableContract {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                padding: 0;
+                padding: 20px;
             }
-            .no-print { display: none !important; }
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 pb-12">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
 
     <!-- Navigation Bar -->
-    <nav class="bg-indigo-900 text-white shadow-md sticky top-0 z-50 no-print">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-arrows-rotate text-emerald-400 text-xl"></i>
-                <span class="text-lg font-bold tracking-wide">Quick TradeIn</span>
+    <header class="bg-indigo-900 text-white shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid me-2 fa-handshake text-2xl text-amber-400"></i>
+                <h1 class="text-xl font-bold tracking-wide">Quick TradeIn <span class="text-xs font-normal text-slate-300">Smart Asset System</span></h1>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="openScannerModal()" class="text-xs bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 shadow">
-                    <i class="fa-solid fa-qrcode"></i> QR စကင်ဖတ်မည်
-                </button>
-                <button onclick="openTermsModal()" class="text-xs bg-indigo-800 hover:bg-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-600">
-                    စည်းကမ်းချက်များ
-                </button>
-            </div>
+            <span class="text-xs bg-indigo-800 px-3 py-1 rounded-full text-indigo-200 border border-indigo-700">Firestore Enabled v2.1</span>
         </div>
-    </nav>
-
-    <!-- Header Section -->
-    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-6 px-4 text-center no-print">
-        <h1 class="text-xl md:text-2xl font-bold">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</h1>
-        <p class="text-indigo-200 mt-1 text-xs">Quick TradeIn Smart Asset Buy-back System</p>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-6 space-y-8 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <!-- Contract Form -->
-        <form id="contractForm" class="bg-white rounded-2xl shadow-xl p-5 md:p-8 space-y-5 border border-slate-100">
-            <input type="hidden" id="editDocId" value="">
-
-            <div class="flex justify-between items-center border-b pb-2 border-slate-200">
-                <h2 class="text-base md:text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <i class="fa-solid fa-file-contract text-indigo-600"></i> စာချုပ် အချက်အလက်များ
-                </h2>
-                <div class="text-xs font-bold bg-indigo-50 text-indigo-800 px-3 py-1 rounded-lg border border-indigo-200">
-                    ID: <span id="generatedVoucherId">QT-AUTO</span>
-                </div>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-4">
+        <!-- Left Column: Input Form (lg:col-span-6) -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200 no-print">
+            <div class="border-b pb-4 mb-6 flex justify-between items-center">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းသူအမည် *</label>
-                    <input type="text" id="sellerName" placeholder="အမည်ရိုက်ထည့်ပါ" oninput="autoUpdateSignature()" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <h2 class="text-lg font-bold text-slate-800">အရောင်းအဝယ် စာချုပ်သစ် ထုတ်ယူရန်</h2>
+                    <p class="text-xs text-slate-500">ပိုင်ဆိုင်မှု လွှဲပြောင်း အချက်အလက်များ ထည့်သွင်းပါ</p>
                 </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">ဖုန်းနံပါတ် *</label>
-                    <input type="tel" id="sellerPhone" placeholder="09xxxxxxxxx" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">မှတ်ပုံတင်အမှတ် *</label>
-                    <input type="text" id="sellerNrc" placeholder="မှတ်ပုံတင်အမှတ်" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
+                <span id="generatedId" class="text-xs font-mono font-bold bg-slate-100 px-2 py-1 rounded text-indigo-700 border">
+                    ID: Generating...
+                </span>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">နေရပ်လိပ်စာ *</label>
-                <textarea id="sellerAddress" rows="2" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-            </div>
+            <form id="tradeForm" class="space-y-4">
+                
+                <!-- Seller Information -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                    <h3 class="text-xs font-semibold text-indigo-900 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-user-check mr-2"></i> ၁။ ရောင်းချသူ အချက်အလက် (KYC)
+                    </h3>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">ရောင်းသူအမည် *</label>
+                        <input type="text" id="sellerName" required placeholder="ဒေါ်အေး" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့် ပစ္စည်းအမျိုးအမည်နှင့် စီးရီးနံပါတ် *</label>
-                <input type="text" id="itemName" placeholder="ပစ္စည်းအမည် / IMEI / S/N" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-            </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">ဖုန်းနံပါတ် *</label>
+                            <input type="tel" id="sellerPhone" required placeholder="09440173728" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">မှတ်ပုံတင်အမှတ် *</label>
+                            <input type="text" id="sellerNrc" required placeholder="၁၂/လသယ(နိုင်)၀၈၈၇၆၅" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
 
-            <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့် ပမာဏ (ကျပ်) *</label>
-                    <input type="number" id="payoutAmount" placeholder="0" oninput="calculateDetails()" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">နေရပ်လိပ်စာ *</label>
+                        <input type="text" id="sellerAddress" required placeholder="၂၄၆/က/မိုင်းမွန်ဆော်ဘွားလမ်း ၁၉ ရပ်ကွက်" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">ရောင်းချသည့်နေ့စွဲ *</label>
-                    <input type="date" id="tradeDate" onchange="calculateDetails()" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-            </div>
+                <!-- Asset Information -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                    <h3 class="text-xs font-semibold text-indigo-900 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-mobile-screen mr-2"></i> ၂။ ရောင်းချသည့် ပစ္စည်း အချက်အလက်
+                    </h3>
 
-            <!-- အလိုအလျောက် တွက်ချက်သည့် အပိုင်း -->
-            <div class="bg-indigo-50/70 p-4 rounded-xl space-y-2 border border-indigo-100 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-slate-600">ဝန်ဆောင်ခ (၈%):</span>
-                    <span id="feeDisplay" class="font-bold text-slate-800">၀ ကျပ်</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-slate-600">ပြန်လည်ဝယ်ယူရန် နောက်ဆုံးရက် (ရက်ပေါင်း ၃၀):</span>
-                    <span id="dueDateDisplay" class="font-bold text-slate-800">-</span>
-                </div>
-                <div class="flex justify-between text-base font-bold text-indigo-900 pt-2 border-t border-indigo-200">
-                    <span>စုစုပေါင်း ပြန်လည်ဝယ်ယူရမည့် ငွေပမာဏ:</span>
-                    <span id="totalDisplay" class="text-emerald-600">၀ ကျပ်</span>
-                </div>
-            </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">ပစ္စည်းအမျိုးအမည်နှင့် စီးရီး/IMEI နံပါတ် *</label>
+                        <input type="text" id="itemDetails" required placeholder="OPPO Phone 2848 IMEI235455585" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
 
-            <!-- Checkbox Signature -->
-            <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200 space-y-3">
-                <div class="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" id="agreeConsent" onchange="autoUpdateSignature()" required class="mt-1 w-5 h-5 text-indigo-600 rounded">
-                    <label for="agreeConsent" class="text-xs text-slate-700 leading-relaxed cursor-pointer select-none">
-                        အထက်ပါ စည်းကမ်းချက်များနှင့် ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူမည့် အချက်များကို သဘောတူပါသဖြင့် အမှန်ခြစ်၍ အီလက်ထရောနစ် လက်မှတ်ရေးထိုးပါသည်-
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">ဝယ်ယူသည့် ဈေးနှုန်း (ကျပ်) *</label>
+                            <input type="number" id="purchaseAmount" required value="110000" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">ရောင်းချသည့်နေ့စွဲ *</label>
+                            <input type="date" id="tradeDate" required class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repurchase Terms -->
+                <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 space-y-3">
+                    <h3 class="text-xs font-semibold text-indigo-900 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-2"></i> ၃။ ပြန်လည်ဝယ်ယူခွင့် သတ်မှတ်ချက်
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">ဝယ်ယူခွင့် ကာလ (ရက်)</label>
+                            <select id="optionDays" class="w-full text-sm p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                <option value="30">ရက်ပေါင်း ၃၀ (၁ လ)</option>
+                                <option value="15">ရက်ပေါင်း ၁၅</option>
+                                <option value="7">ရက်ပေါင်း ၇</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">ပြန်လည်ဝယ်ယူရမည့် ဈေးနှုန်း (ကျပ်)</label>
+                            <input type="number" id="repurchaseAmount" readonly class="w-full text-sm p-2.5 border rounded-lg bg-slate-100 font-bold text-indigo-900 outline-none">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-indigo-700 italic">* ရက်စွဲအတွင်း မူလရောင်းသူမှ သီးခြားပြန်လည်ဝယ်ယူနိုင်သော ဦးစားပေးဈေးနှုန်း ဖြစ်ပါသည်။</p>
+                </div>
+
+                <!-- Legal Declarations Checklist -->
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+                    <label class="flex items-start space-x-2 text-xs text-amber-900 cursor-pointer">
+                        <input type="checkbox" id="legalCheck1" required class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>ဤပစ္စည်းသည် မိမိကိုယ်ပိုင် ပစ္စည်းအစစ်အမှန် ဖြစ်ပြီး ခိုးရာပါ သို့မဟုတ် တရားမဝင် ရယူထားခြင်း မဟုတ်ကြောင်း အာမခံပါသည်။</span>
+                    </label>
+                    <label class="flex items-start space-x-2 text-xs text-amber-900 cursor-pointer">
+                        <input type="checkbox" id="legalCheck2" required class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span>ပိုင်ဆိုင်ခွင့်အား အပြီးအပိုင် လွှဲပြောင်းရောင်းချပြီး သတ်မှတ်ရက်အတွင်း ပြန်လည်ဝယ်ယူခွင့် စည်းကမ်းများကို နားလည်သဘောတူပါသည်။</span>
                     </label>
                 </div>
 
-                <input type="text" id="typedSignature" readonly placeholder="အမှန်ခြစ်ပါက အလိုအလျောက် လက်မှတ်ထိုးပါမည်" class="w-full p-2.5 text-xs font-semibold border border-slate-300 rounded-lg outline-none bg-slate-100 text-indigo-900">
-            </div>
-
-            <!-- Buttons -->
-            <div class="space-y-2">
-                <button type="submit" id="submitBtn" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-floppy-disk"></i> <span id="submitBtnText">စာချုပ်အား သိမ်းဆည်းမည်</span>
-                </button>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" onclick="copyContractToClipboard()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-copy"></i> စာချုပ် Copy ကူးမည်
-                    </button>
-                    <button type="button" onclick="shareContract()" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-share-nodes"></i> စာချုပ် Share လုပ်မည်
+                <!-- Actions -->
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" id="submitBtn" class="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white font-medium py-2.5 px-4 rounded-lg shadow text-sm flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Firestore သို့သိမ်းဆည်း၍ စာချုပ်ထုတ်မည်
                     </button>
                 </div>
-            </div>
-        </form>
 
-        <!-- Contract History Dashboard -->
-        <section class="bg-white rounded-2xl shadow-xl p-5 md:p-8 border border-slate-100 space-y-4">
-            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3 border-slate-200">
-                <h2 class="text-base md:text-lg font-bold text-indigo-900 flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> သိမ်းဆည်းထားသော စာချုပ်မှတ်တမ်းများ
-                </h2>
+            </form>
+        </div>
+
+        <!-- Right Column: Printable Legal Contract Preview (lg:col-span-6) -->
+        <div class="lg:col-span-6">
+            <div id="printableContract" class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 space-y-6 text-slate-800 text-xs leading-relaxed">
                 
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <input type="text" id="searchInput" onkeyup="filterContracts()" placeholder="ID Code၊ အမည် သို့ ဖုန်းဖြင့် ရှာမည်..." class="p-2 border border-slate-300 rounded-lg text-xs outline-none w-full md:w-56">
-                    <button onclick="loadContracts()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg text-slate-700">
-                        <i class="fa-solid fa-rotate"></i>
-                    </button>
+                <!-- Contract Header -->
+                <div class="text-center border-b pb-4">
+                    <h2 class="text-base font-bold text-slate-900 uppercase tracking-wide">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</h2>
+                    <p class="text-[11px] text-slate-500 font-medium">Quick TradeIn Smart Asset Management System</p>
+                    <div class="mt-2 text-xs font-mono font-bold text-indigo-900" id="viewContractId">စာချုပ်အမှတ်: -</div>
                 </div>
+
+                <!-- Parties & Date -->
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded border border-slate-200 text-[11px]">
+                    <div><strong>စာချုပ်ချုပ်ဆိုသည့်နေ့:</strong> <span id="viewContractDate">-</span></div>
+                    <div><strong>ပြန်လည်ဝယ်ယူနိုင်သည့် နောက်ဆုံးရက်:</strong> <span id="viewExpiryDate" class="text-red-600 font-bold">-</span></div>
+                </div>
+
+                <!-- Seller Info Summary -->
+                <div class="space-y-1 text-[11px]">
+                    <div class="font-bold text-slate-900 border-b pb-1">၁။ ရောင်းချသူ အချက်အလက်</div>
+                    <p><strong>အမည်:</strong> <span id="viewSellerName">ဒေါ်အေး</span></p>
+                    <p><strong>မှတ်ပုံတင်အမှတ်:</strong> <span id="viewSellerNrc">၁၂/လသယ(နိုင်)၀၈၈၇၆၅</span></p>
+                    <p><strong>ဖုန်းနံပါတ်:</strong> <span id="viewSellerPhone">09440173728</span></p>
+                    <p><strong>နေရပ်လိပ်စာ:</strong> <span id="viewSellerAddress">၂၄၆/က/မိုင်းမွန်ဆော်ဘွားလမ်း ၁၉ ရပ်ကွက်</span></p>
+                </div>
+
+                <!-- Asset Summary -->
+                <div class="space-y-1 text-[11px]">
+                    <div class="font-bold text-slate-900 border-b pb-1">၂။ ရောင်းချသည့် ပစ္စည်းနှင့် သဘောတူညီချက် ဈေးနှုန်း</div>
+                    <p><strong>ပစ္စည်းအမျိုးအမည်/IMEI:</strong> <span id="viewItemDetails">OPPO Phone 2848 IMEI235455585</span></p>
+                    <p><strong>ရောင်းချသည့် ပမာဏ (ဝယ်ယူသည့်ဈေး):</strong> <span id="viewPurchasePrice" class="font-bold text-slate-900">၁၁၀,၀၀၀ ကျပ်</span></p>
+                    <p><strong>သတ်မှတ် ပြန်လည်ဝယ်ယူနိုင်သည့် ဈေးနှုန်း:</strong> <span id="viewRepurchasePrice" class="font-bold text-indigo-900">၁၁၈,၈၀၀ ကျပ်</span></p>
+                </div>
+
+                <!-- Legal Terms & Clauses -->
+                <div class="space-y-2 bg-slate-50 p-3 rounded border border-slate-200 text-[10.5px] text-justify leading-normal">
+                    <div class="font-bold text-slate-900 border-b pb-1">၃။ စာချုပ်ပါ ဥပဒေရေးရာ စည်းကမ်းချက်များ</div>
+                    <p>
+                        <strong>(က) ပိုင်ဆိုင်ခွင့် လွှဲပြောင်းခြင်း:</strong> ရောင်းသူသည် အထက်ဖော်ပြပါ ပစ္စည်းအား မိမိကိုယ်ပိုင် ပိုင်ဆိုင်ကြောင်း အာမခံပြီး၊ ယနေ့ရက်စွဲတွင် ဝယ်သူထံသို့ သဘောတူညီသော ငွေပမာဏဖြင့် အပြီးအပိုင် ရောင်းချ၍ လက်ရောက် လွှဲပြောင်းပေးအပ်ပြီး ဖြစ်ပါသည်။
+                    </p>
+                    <p>
+                        <strong>(ခ) ဦးစားပေး ပြန်လည်ဝယ်ယူခွင့် (Option to Repurchase):</strong> ဝယ်သူသည် ရောင်းသူအား သတ်မှတ်ထားသော နောက်ဆုံးရက် မတိုင်မီအတွင်း သဘောတူညီထားသည့် "ပြန်လည်ဝယ်ယူနိုင်သည့် ဈေးနှုန်း" ဖြင့် သီးခြား ပြန်လည်ဝယ်ယူနိုင်သော ဦးစားပေး အခွင့်အရေးကို ပေးအပ်ထားသည်။ ဤသည်မှာ ငွေကြေး အပေါင်/ချေးငှားခြင်း မဟုတ်ပါ။
+                    </p>
+                    <p>
+                        <strong>(ဂ) အခွင့်အရေး ပျက်ပြယ်ခြင်း:</strong> သတ်မှတ်ထားသော နောက်ဆုံးရက် ကျော်လွန်သည်အထိ မူလရောင်းသူမှ ပြန်လည်ဝယ်ယူခြင်း မရှိပါက အဆိုပါ ဦးစားပေး ပြန်လည်ဝယ်ယူခွင့် အခွင့်အရေးသည် အလိုအလျောက် ပျက်ပြယ်မည်ဖြစ်ပြီး ဝယ်သူသည် ထိုပစ္စည်းအား စိတ်ကြိုက် စီမံခန့်ခွဲ ရောင်းချပိုင်ခွင့် ရှိသည်။
+                    </p>
+                    <p>
+                        <strong>(ဃ) ခိုးရာပါပစ္စည်း မဟုတ်ကြောင်း တာဝန်ယူမှု:</strong> ပစ္စည်းနှင့် ပတ်သက်၍ ဥပဒေကြောင်းအရ အငြင်းပွားမှု သို့မဟုတ် မသမာမှု ပေါ်ပေါက်ပါက ရောင်းသူမှ လုံးဝ တာဝန်ယူ ဖြေရှင်းရမည် ဖြစ်သည်။
+                    </p>
+                </div>
+
+                <!-- Signatures -->
+                <div class="grid grid-cols-2 gap-8 pt-8 text-center text-[11px]">
+                    <div>
+                        <div class="border-b border-slate-400 mb-2 h-10 flex items-end justify-center italic text-slate-400">(အီလက်ထရောနစ် လက်မှတ်)</div>
+                        <p class="font-bold">ရောင်းသူ လက်မှတ်</p>
+                        <p class="text-[10px] text-slate-500">(<span id="viewSignatureName">ဒေါ်အေး</span>)</p>
+                    </div>
+                    <div>
+                        <div class="border-b border-slate-400 mb-2 h-10 flex items-end justify-center font-bold text-indigo-900">Quick TradeIn System</div>
+                        <p class="font-bold">ဝယ်သူ/စနစ် လက်ခံသူ လက်မှတ်</p>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 border-b">
-                            <th class="p-2.5">ID / ရောင်းသူ</th>
-                            <th class="p-2.5">ပစ္စည်း</th>
-                            <th class="p-2.5">စုစုပေါင်းငွေ</th>
-                            <th class="p-2.5">နောက်ဆုံးရက်</th>
-                            <th class="p-2.5 text-center">အခြေအနေ</th>
-                            <th class="p-2.5 text-center">လုပ်ဆောင်ချက်</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody" class="divide-y">
-                        <tr>
-                            <td colspan="6" class="p-4 text-center text-slate-400">မှတ်တမ်းများ ရယူနေပါသည်...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Modal View for Voucher / Receipt -->
-    <div id="voucherModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-2 md:p-4 overflow-y-auto no-print">
-        <div class="bg-white rounded-2xl max-w-xl w-full p-4 md:p-6 space-y-4 my-auto shadow-2xl max-h-[95vh] overflow-y-auto">
-            
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold text-indigo-900" id="modalHeaderTitle">စာချုပ်/ဘောက်ချာ ကြည့်ရှုခြင်း</h3>
-                <button onclick="closeVoucherModal()" class="text-slate-400 hover:text-slate-600 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
+            <!-- Print & Share Controls -->
+            <div class="mt-4 flex gap-3 no-print">
+                <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i> စာချုပ် ပရင့်ထုတ်မည်
                 </button>
-            </div>
-
-            <!-- Dynamic Voucher Box -->
-            <div id="pdfContent" class="voucher-box rounded-lg">
-                
-                <!-- Status Watermark (If Completed) -->
-                <div id="statusWatermark" class="hidden" style="position: absolute; top: 35%; left: 15%; transform: rotate(-25deg); border: 4px solid #dc2626; color: #dc2626; font-size: 24px; font-weight: bold; padding: 10px 20px; border-radius: 8px; opacity: 0.85; pointer-events: none; text-align: center; background: rgba(255,255,255,0.8);">
-                    ပစ္စည်း ပြန်လည်ရွေးယူပြီး<br><span style="font-size: 14px;">(စာချုပ် ပျက်ပြယ်ပြီးပါပြီ)</span>
-                </div>
-
-                <div style="text-align: center; border-bottom: 2px solid #1e1b4b; padding-bottom: 8px; margin-bottom: 12px;">
-                    <h2 style="margin: 0; font-size: 20px; font-weight: bold; color: #1e1b4b;">Quick TradeIn</h2>
-                    <p id="voucherSubHeading" style="margin: 2px 0; font-size: 11px; font-weight: bold;">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</p>
-                    <div style="font-size: 10px; margin-top: 4px;">
-                        <strong>Voucher ID:</strong> <span id="vVoucherId" style="color: #d97706; font-weight: bold;"></span>
-                    </div>
-                </div>
-                
-                <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 12px;">
-                    <tr style="background: #f8fafc;"><td style="padding: 5px; border: 1px solid #cbd5e1; width: 40%;"><strong>ရောင်းသူအမည်:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vSellerName"></td></tr>
-                    <tr><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>ဖုန်းနံပါတ်:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vSellerPhone"></td></tr>
-                    <tr style="background: #f8fafc;"><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>မှတ်ပုံတင်အမှတ်:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vSellerNrc"></td></tr>
-                    <tr><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>နေရပ်လိပ်စာ:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vSellerAddress"></td></tr>
-                    <tr style="background: #f8fafc;"><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>ပစ္စည်း/စီးရီးနံပါတ်:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vItemName"></td></tr>
-                    <tr><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>ရောင်းချသည့်ပမာဏ:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vPayout"></td></tr>
-                    <tr style="background: #f8fafc;"><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>ဝန်ဆောင်ခ (၈%):</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vFee"></td></tr>
-                    <tr style="background: #e0e7ff;"><td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold;"><strong>ပြန်လည်ဝယ်ယူရမည့်စုစုပေါင်း:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1; font-weight: bold; color: #047857;" id="vTotal"></td></tr>
-                    <tr><td style="padding: 5px; border: 1px solid #cbd5e1;"><strong>ရောင်းချသည့်နေ့စွဲ:</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1;" id="vTradeDate"></td></tr>
-                    <tr style="background: #fef2f2;"><td style="padding: 5px; border: 1px solid #cbd5e1; color: #dc2626; font-weight: bold;"><strong>နောက်ဆုံးရက် (ရက် ၃၀):</strong></td><td style="padding: 5px; border: 1px solid #cbd5e1; color: #dc2626; font-weight: bold;" id="vDueDate"></td></tr>
-                </table>
-
-                <div style="border: 1px solid #cbd5e1; padding: 8px; border-radius: 4px; font-size: 9px; line-height: 1.5; background: #f8fafc; margin-bottom: 15px;">
-                    <div style="font-weight: bold; text-decoration: underline; margin-bottom: 2px;">စည်းကမ်းချက်များနှင့် သဘောတူညီချက်များ:</div>
-                    ၁။ ဤစာချုပ်သည် အရောင်းအဝယ်ပြုလုပ်၍ ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူခွင့်ပေးသော စနစ်ဖြစ်ပါသည်။<br>
-                    ၂။ ရက်ပေါင်း (၃၀) ကျော်လွန်ပါက ရောင်းသူမှ ပစ္စည်းအား ပြန်လည်ဝယ်ယူရန် စွန့်လွှတ်လိုက်ပြီဖြစ်သဖြင့် ဝယ်သူမှ အပြီးအပိုင် စိတ်ကြိုက် ပြန်လည်ရောင်းချ စီမံပိုင်ခွင့်ရှိပါသည်။<br>
-                    ၃။ ရောင်းသူသည် ဤစည်းကမ်းချက်များအားလုံးကို သဘောတူညီပါသဖြင့် အမှန်ခြစ်၍ လက်မှတ်ရေးထိုးထားပါသည်။
-                </div>
-
-                <!-- Footer with Dynamic QR Code and Signatures -->
-                <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px;">
-                    <!-- QR Code Box -->
-                    <div style="text-align: center; width: 30%;">
-                        <div id="qrcode" style="display: flex; justify-content: center; margin-bottom: 4px;"></div>
-                        <div style="font-size: 8px; color: #64748b;">မူရင်း စာချုပ် စစ်ဆေးရန်</div>
-                    </div>
-
-                    <div style="text-align: center; width: 33%;">
-                        <div id="vSignatureText" style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 5px;"></div>
-                        <div>ရောင်းသူ လက်မှတ်</div>
-                    </div>
-                    
-                    <div style="text-align: center; width: 33%;">
-                        <div style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 5px;">&nbsp;</div>
-                        <div>ဆိုင်ပိုင်ရှင် / ဝယ်သူ လက်မှတ်</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Action Buttons -->
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="downloadPDF()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-download"></i> PDF ဒေါင်းမည်
-                </button>
-                <button onclick="window.print()" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-print"></i> Print ထုတ်မည်
-                </button>
-                <button onclick="closeVoucherModal()" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-xmark"></i> ပိတ်မည်
+                <button onclick="copyContractLink()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-copy"></i> စာချုပ် Link ကူးမည်
                 </button>
             </div>
         </div>
+
     </div>
 
-    <!-- QR Camera Scanner Modal -->
-    <div id="scannerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-base font-bold text-indigo-900 flex items-center gap-2">
-                    <i class="fa-solid fa-camera"></i> QR Code စကင်ဖတ် စစ်ဆေးခြင်း
-                </h3>
-                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-slate-600 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <div id="qr-reader" class="w-full rounded-xl overflow-hidden border border-slate-200"></div>
-            <p class="text-xs text-slate-500 text-center">စာချုပ်ပေါ်ရှိ QR Code ကို ကင်မရာရှေ့တွင် ပြပေးပါ</p>
-        </div>
-    </div>
-
-    <!-- Hidden Print Container -->
-    <div id="voucherPrintArea" class="hidden"></div>
-
-    <!-- Terms Modal -->
-    <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-indigo-900 border-b pb-2">Quick TradeIn စည်းကမ်းချက်များ</h3>
-            <div class="text-sm text-slate-600 space-y-2 leading-relaxed">
-                <p>၁။ ဤစာချုပ်သည် အရောင်းအဝယ်ပြုလုပ်၍ ရက်ပေါင်း (၃၀) အတွင်း ၈% ဝန်ဆောင်ခဖြင့် ပြန်လည်ဝယ်ယူခွင့်ပေးသော စနစ်ဖြစ်ပါသည်။</p>
-                <p>၂။ ရက်ပေါင်း (၃၀) ကျော်လွန်ပါက ပစ္စည်းအား စိတ်ကြိုက် ပြန်လည်ရောင်းချပိုင်ခွင့် ရှိပါသည်။</p>
-            </div>
-            <button onclick="closeTermsModal()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-semibold">လက်ခံပါသည်</button>
-        </div>
-    </div>
-
-    <!-- Firebase & System Scripts -->
+    <!-- Firebase SDK Modules (v9/v10) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // TODO: မိမိ၏ Firebase Console မှ ရရှိသော Firebase Credentials များကို ဤနေရာတွင် အစားထိုးပါ
         const firebaseConfig = {
-            apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
-            authDomain: "quick-tradein-app.firebaseapp.com",
-            databaseURL: "https://quick-tradein-app-default-rtdb.firebaseio.com",
-            projectId: "quick-tradein-app",
-            storageBucket: "quick-tradein-app.firebasestorage.app",
-            messagingSenderId: "1045062546373",
-            appId: "1:1045062546373:web:ef23268eaa76330daa91ac",
-            measurementId: "G-PYWJ781099"
-        };
+  apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
+  authDomain: "quick-tradein-app.firebaseapp.com",
+  databaseURL: "https://quick-tradein-app-default-rtdb.firebaseio.com",
+  projectId: "quick-tradein-app",
+  storageBucket: "quick-tradein-app.firebasestorage.app",
+  messagingSenderId: "1045062546373",
+  appId: "1:1045062546373:web:ef23268eaa76330daa91ac",
+  measurementId: "G-PYWJ781099"
+};
 
+        // Initialize Firebase & Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let allContractsData = [];
-        let html5QrcodeScanner = null;
-        const ADMIN_PIN = "1234"; // စကားဝှက်
+        // Generate Transaction ID
+        const currentContractId = "QT-2026-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('generatedId').innerText = "ID: " + currentContractId;
+        document.getElementById('viewContractId').innerText = "စာချုပ်အမှတ်: " + currentContractId;
 
+        // Set Default Date
         document.getElementById('tradeDate').valueAsDate = new Date();
 
-        const generateVoucherCode = () => {
-            const randomNum = Math.floor(1000 + Math.random() * 9000);
-            return `QT-${new Date().getFullYear()}-${randomNum}`;
-        };
-        document.getElementById('generatedVoucherId').innerText = generateVoucherCode();
+        function calculateRepurchase() {
+            const price = parseFloat(document.getElementById('purchaseAmount').value) || 0;
+            const days = parseInt(document.getElementById('optionDays').value) || 30;
 
-        // Audio Voice Feedback Function
-        window.speakFeedback = (text) => {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'my-MM'; // မြန်မာသံထွက် ဦးစားပေး
-                utterance.rate = 0.9;
-                window.speechSynthesis.speak(utterance);
-            }
-        };
+            const marginRate = (days / 30) * 0.08;
+            const repurchasePrice = price + (price * marginRate);
 
-        // Admin Password Guard
-        window.checkAdminPassword = () => {
-            const userInput = prompt("လုပ်ဆောင်ရန် Admin Password (စကားဝှက်) ရိုက်ထည့်ပါ:");
-            if (userInput === ADMIN_PIN) {
-                return true;
-            } else if (userInput !== null) {
-                alert("Password မမှန်ကန်ပါ။");
-            }
-            return false;
-        };
+            document.getElementById('repurchaseAmount').value = Math.round(repurchasePrice);
+            updateContractPreview();
+        }
 
-        window.calculateDetails = () => {
-            const amount = parseFloat(document.getElementById('payoutAmount').value) || 0;
-            const fee = amount * 0.08;
-            const total = amount + fee;
+        function updateContractPreview() {
+            const name = document.getElementById('sellerName').value || "ဒေါ်အေး";
+            const phone = document.getElementById('sellerPhone').value || "09440173728";
+            const nrc = document.getElementById('sellerNrc').value || "၁၂/လသယ(နိုင်)၀၈၈၇၆၅";
+            const address = document.getElementById('sellerAddress').value || "၂၄၆/က/မိုင်းမွန်ဆော်ဘွားလမ်း ၁၉ ရပ်ကွက်";
+            const item = document.getElementById('itemDetails').value || "OPPO Phone 2848 IMEI235455585";
+            const price = parseFloat(document.getElementById('purchaseAmount').value) || 110000;
+            const repurchasePrice = parseFloat(document.getElementById('repurchaseAmount').value) || 118800;
+            const tradeDateStr = document.getElementById('tradeDate').value;
 
-            document.getElementById('feeDisplay').innerText = fee.toLocaleString() + ' ကျပ်';
-            document.getElementById('totalDisplay').innerText = total.toLocaleString() + ' ကျပ်';
+            const tradeDate = tradeDateStr ? new Date(tradeDateStr) : new Date();
+            const days = parseInt(document.getElementById('optionDays').value) || 30;
+            
+            const expiryDate = new Date(tradeDate);
+            expiryDate.setDate(expiryDate.getDate() + days);
 
-            const tradeDateVal = document.getElementById('tradeDate').value;
-            if (tradeDateVal) {
-                const date = new Date(tradeDateVal);
-                date.setDate(date.getDate() + 30);
-                document.getElementById('dueDateDisplay').innerText = date.toISOString().split('T')[0];
-            }
-        };
+            document.getElementById('viewSellerName').innerText = name;
+            document.getElementById('viewSignatureName').innerText = name;
+            document.getElementById('viewSellerPhone').innerText = phone;
+            document.getElementById('viewSellerNrc').innerText = nrc;
+            document.getElementById('viewSellerAddress').innerText = address;
+            document.getElementById('viewItemDetails').innerText = item;
+            
+            document.getElementById('viewPurchasePrice').innerText = price.toLocaleString('my-MM') + " ကျပ်";
+            document.getElementById('viewRepurchasePrice').innerText = repurchasePrice.toLocaleString('my-MM') + " ကျပ်";
+            
+            document.getElementById('viewContractDate').innerText = tradeDate.toLocaleDateString('en-GB');
+            document.getElementById('viewExpiryDate').innerText = expiryDate.toLocaleDateString('en-GB');
+        }
 
-        window.autoUpdateSignature = () => {
-            const isChecked = document.getElementById('agreeConsent').checked;
-            const sellerName = document.getElementById('sellerName').value.trim();
-            const sigInput = document.getElementById('typedSignature');
+        // Add Event Listeners for inputs
+        document.getElementById('purchaseAmount').addEventListener('input', calculateRepurchase);
+        document.getElementById('optionDays').addEventListener('change', calculateRepurchase);
+        document.querySelectorAll('#tradeForm input').forEach(input => {
+            input.addEventListener('input', updateContractPreview);
+        });
 
-            if (isChecked && sellerName !== '') {
-                sigInput.value = sellerName + " (အီလက်ထရောနစ် သဘောတူညီချက် လက်မှတ်)";
-            } else {
-                sigInput.value = '';
-            }
-        };
-
-        window.copyContractToClipboard = () => {
-            const voucherId = document.getElementById('generatedVoucherId').innerText;
-            const text = `--- Quick TradeIn စာချုပ် (${voucherId}) ---
-ရောင်းသူ: ${document.getElementById('sellerName').value} (${document.getElementById('sellerPhone').value})
-မှတ်ပုံတင်: ${document.getElementById('sellerNrc').value}
-လိပ်စာ: ${document.getElementById('sellerAddress').value}
-ပစ္စည်း: ${document.getElementById('itemName').value}
-ရောင်းချငွေ: ${document.getElementById('payoutAmount').value} ကျပ်
-ဝန်ဆောင်ခ (၈%): ${document.getElementById('feeDisplay').innerText}
-ပြန်လည်ဝယ်ယူရမည့် စုစုပေါင်း: ${document.getElementById('totalDisplay').innerText}
-ရောင်းချသည့်နေ့: ${document.getElementById('tradeDate').value}
-နောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}`;
-
-            navigator.clipboard.writeText(text);
-            alert('စာချုပ်အချက်အလက်များကို Copy ကူးပြီးပါပြီ။');
-        };
-
-        window.shareContract = async () => {
-            const text = `Quick TradeIn စာချုပ်\nID: ${document.getElementById('generatedVoucherId').innerText}\nရောင်းသူ: ${document.getElementById('sellerName').value}\nပစ္စည်း: ${document.getElementById('itemName').value}\nပြန်လည်ဝယ်ယူရမည့်ငွေ: ${document.getElementById('totalDisplay').innerText}\nနောက်ဆုံးရက်: ${document.getElementById('dueDateDisplay').innerText}`;
-            if (navigator.share) {
-                try { await navigator.share({ title: 'Quick TradeIn စာချုပ်', text: text }); } catch (e) {}
-            } else {
-                copyContractToClipboard();
-            }
-        };
-
-        // Form Submit
-        document.getElementById('contractForm').addEventListener('submit', async (e) => {
+        // Submit Form & Save to Firestore
+        document.getElementById('tradeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> သိမ်းဆည်းနေပါသည်...`;
 
-            const btn = document.getElementById('submitBtn');
-            const editId = document.getElementById('editDocId').value;
-
-            // ပြင်ဆင်ခြင်းဖြစ်ပါက Password စစ်မည်
-            if (editId && !checkAdminPassword()) return;
-
-            btn.disabled = true;
+            const tradeData = {
+                contractId: currentContractId,
+                sellerName: document.getElementById('sellerName').value,
+                sellerPhone: document.getElementById('sellerPhone').value,
+                sellerNrc: document.getElementById('sellerNrc').value,
+                sellerAddress: document.getElementById('sellerAddress').value,
+                itemDetails: document.getElementById('itemDetails').value,
+                purchaseAmount: parseFloat(document.getElementById('purchaseAmount').value),
+                repurchaseAmount: parseFloat(document.getElementById('repurchaseAmount').value),
+                optionDays: parseInt(document.getElementById('optionDays').value),
+                tradeDate: document.getElementById('tradeDate').value,
+                createdAt: serverTimestamp(),
+                status: "ACTIVE"
+            };
 
             try {
-                const amount = parseFloat(document.getElementById('payoutAmount').value);
-                const fee = amount * 0.08;
-
-                const contractData = {
-                    voucherId: editId ? document.getElementById('generatedVoucherId').innerText : generateVoucherCode(),
-                    sellerName: document.getElementById('sellerName').value,
-                    sellerPhone: document.getElementById('sellerPhone').value,
-                    sellerNrc: document.getElementById('sellerNrc').value,
-                    sellerAddress: document.getElementById('sellerAddress').value,
-                    itemName: document.getElementById('itemName').value,
-                    payoutAmount: amount,
-                    feeAmount: fee,
-                    totalBuybackAmount: amount + fee,
-                    tradeDate: document.getElementById('tradeDate').value,
-                    dueDate: document.getElementById('dueDateDisplay').innerText,
-                    signature: document.getElementById('typedSignature').value,
-                    updatedAt: serverTimestamp()
-                };
-
-                if (editId) {
-                    await updateDoc(doc(db, "contracts", editId), contractData);
-                    alert('စာချုပ်ကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။');
-                    document.getElementById('editDocId').value = '';
-                    document.getElementById('submitBtnText').innerText = 'စာချုပ်အား သိမ်းဆည်းမည်';
-                } else {
-                    contractData.status = "ACTIVE";
-                    contractData.createdAt = serverTimestamp();
-                    await addDoc(collection(db, "contracts"), contractData);
-                    alert('စာချုပ်အသစ်ကို သိမ်းဆည်းပြီးပါပြီ။');
-                    document.getElementById('generatedVoucherId').innerText = generateVoucherCode();
-                }
-
-                document.getElementById('contractForm').reset();
-                document.getElementById('tradeDate').valueAsDate = new Date();
-                calculateDetails();
-                loadContracts();
+                // Firestore "tradein_contracts" collection သို့ သိမ်းဆည်းခြင်း
+                const docRef = await addDoc(collection(db, "tradein_contracts"), tradeData);
+                alert("စာချုပ်အချက်အလက်များကို Firestore Database ထဲသို့ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။ Document ID: " + docRef.id);
             } catch (error) {
-                alert("Error: " + error.message);
+                console.error("Error adding document: ", error);
+                alert("Database သို့ သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
             } finally {
-                btn.disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Firestore သို့သိမ်းဆည်း၍ စာချုပ်ထုတ်မည်`;
             }
         });
 
-        // Load Contracts
-        window.loadContracts = async () => {
-            const tbody = document.getElementById('historyTableBody');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> ရယူနေပါသည်...</td></tr>';
-
-            try {
-                const q = query(collection(db, "contracts"), orderBy("createdAt", "desc"));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">စာချုပ်မှတ်တမ်း မရှိသေးပါ။</td></tr>';
-                    return;
-                }
-
-                allContractsData = [];
-                querySnapshot.forEach((docSnap) => {
-                    allContractsData.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
-                renderTable(allContractsData);
-            } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error: ${error.message}</td></tr>`;
-            }
+        window.copyContractLink = function() {
+            navigator.clipboard.writeText(window.location.href);
+            alert("စာချုပ် Link အား ကူးယူပြီးပါပြီ။");
         };
 
-        function renderTable(dataArray) {
-            const tbody = document.getElementById('historyTableBody');
-            if (dataArray.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">ရှာဖွေမှုမတွေ့ပါ။</td></tr>';
-                return;
-            }
-
-            let html = '';
-            dataArray.forEach((item) => {
-                const isCompleted = item.status === "COMPLETED";
-                const statusBadge = isCompleted 
-                    ? `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">ဝယ်ယူပြီး</span>`
-                    : `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold">စောင့်ဆိုင်းဆဲ</span>`;
-
-                html += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-2.5">
-                            <div class="font-bold text-indigo-900">${item.voucherId || 'QT-OLD'}</div>
-                            <div class="font-semibold text-slate-700">${item.sellerName}</div>
-                            <div class="text-[10px] text-slate-400">${item.sellerPhone || '-'}</div>
-                        </td>
-                        <td class="p-2.5">${item.itemName}</td>
-                        <td class="p-2.5 font-bold text-emerald-600">${(item.totalBuybackAmount || 0).toLocaleString()} ကျပ်</td>
-                        <td class="p-2.5 text-slate-500">${item.dueDate || '-'}</td>
-                        <td class="p-2.5 text-center">${statusBadge}</td>
-                        <td class="p-2.5 text-center space-x-1">
-                            <button onclick="openVoucherModal('${item.id}')" class="text-sky-600 hover:text-sky-800 font-bold">
-                                <i class="fa-solid fa-file-pdf"></i> ဘောက်ချာ
-                            </button> | 
-                            <button onclick="toggleStatus('${item.id}', '${item.status}')" class="text-xs ${isCompleted ? 'text-amber-600' : 'text-emerald-600'} hover:underline font-semibold">
-                                ${isCompleted ? 'မပြီးသေးသို့' : 'ဝယ်ယူပြီး'}
-                            </button> | 
-                            <button onclick="editContract('${item.id}')" class="text-indigo-600 font-semibold">
-                                ပြင်
-                            </button> | 
-                            <button onclick="deleteContract('${item.id}')" class="text-red-500 font-semibold">
-                                ဖျက်
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        // ဘောက်ချာ ကြည့်ရှုခြင်း Modal (With Dynamic QR Code Generation)
-        window.openVoucherModal = (id) => {
-            const item = allContractsData.find(c => c.id === id);
-            if (!item) return;
-
-            const isCompleted = item.status === "COMPLETED";
-
-            document.getElementById('vVoucherId').innerText = item.voucherId || 'QT-UNKNOWN';
-            document.getElementById('vSellerName').innerText = item.sellerName || '-';
-            document.getElementById('vSellerPhone').innerText = item.sellerPhone || '-';
-            document.getElementById('vSellerNrc').innerText = item.sellerNrc || '-';
-            document.getElementById('vSellerAddress').innerText = item.sellerAddress || '-';
-            document.getElementById('vItemName').innerText = item.itemName || '-';
-            document.getElementById('vPayout').innerText = (item.payoutAmount || 0).toLocaleString() + ' ကျပ်';
-            document.getElementById('vFee').innerText = (item.feeAmount || 0).toLocaleString() + ' ကျပ်';
-            document.getElementById('vTotal').innerText = (item.totalBuybackAmount || 0).toLocaleString() + ' ကျပ်';
-            document.getElementById('vTradeDate').innerText = item.tradeDate || '-';
-            document.getElementById('vDueDate').innerText = item.dueDate || '-';
-            document.getElementById('vSignatureText').innerText = item.signature || item.sellerName;
-
-            // ရွေးယူပြီးပါက Watermark နှင့် ပြေစာအဖြစ် ပြောင်းလဲခြင်း
-            const watermark = document.getElementById('statusWatermark');
-            const subHeading = document.getElementById('voucherSubHeading');
-            if (isCompleted) {
-                watermark.classList.remove('hidden');
-                subHeading.innerText = "ပစ္စည်း ပြန်လည်ရွေးယူပြီးကြောင်း သက်သေခံ ပြေစာ (Settled Receipt)";
-            } else {
-                watermark.classList.add('hidden');
-                subHeading.innerText = "ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်";
-            }
-
-            // QR Code ထုတ်လုပ်ခြင်း
-            const qrContainer = document.getElementById("qrcode");
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, {
-                text: item.voucherId,
-                width: 65,
-                height: 65
-            });
-
-            document.getElementById('voucherPrintArea').innerHTML = document.getElementById('pdfContent').outerHTML;
-            document.getElementById('voucherModal').classList.remove('hidden');
-        };
-
-        window.closeVoucherModal = () => {
-            document.getElementById('voucherModal').classList.add('hidden');
-        };
-
-        // စည်းကမ်းချက်များ မပြတ်ဘဲ အပြည့်ပါဝင်စေသည့် PDF ဒေါင်းလုဒ် Function
-        window.downloadPDF = async () => {
-            const element = document.getElementById('pdfContent');
-            const voucherId = document.getElementById('vVoucherId').innerText;
-
-            try {
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-
-                const imgWidth = 190; // A4 စာရွက် ဘေးအနား သတ်မှတ်ချက် (mm)
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-                const pdf = new jsPDF('p', 'mm', [210, imgHeight + 20]);
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                pdf.save(`Contract_${voucherId}.pdf`);
-            } catch (error) {
-                alert("PDF ဒေါင်းလုဒ်ဆွဲရာတွင် အမှားအယွင်းရှိပါသည်: " + error.message);
-            }
-        };
-
-        // QR Scanner Control & Audio Feedback
-        window.openScannerModal = () => {
-            document.getElementById('scannerModal').classList.remove('hidden');
-            html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScanSuccess);
-        };
-
-        window.closeScannerModal = () => {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear();
-            }
-            document.getElementById('scannerModal').classList.add('hidden');
-        };
-
-        function onScanSuccess(decodedText) {
-            closeScannerModal();
-            const foundItem = allContractsData.find(c => c.voucherId === decodedText || c.id === decodedText);
-
-            if (foundItem) {
-                openVoucherModal(foundItem.id);
-                if (foundItem.status === "COMPLETED") {
-                    speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည် ရွေးယူပြီး ပျက်ပြယ်ပြီးသား ဖြစ်ပါသည်");
-                    alert(`⚠️ [စစ်ဆေးတွေ့ရှိချက်]\nVoucher ID: ${foundItem.voucherId}\nရောင်းသူ: ${foundItem.sellerName}\nအခြေအနေ: ပစ္စည်း ပြန်လည်ရွေးယူပြီး (စာချုပ် ပျက်ပြယ်ပြီးပါပြီ)`);
-                } else {
-                    speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ရွေးယူရန် ကျန်ရှိနေသေးပါသည်");
-                    alert(`✅ [စစ်ဆေးတွေ့ရှိချက်]\nVoucher ID: ${foundItem.voucherId}\nရောင်းသူ: ${foundItem.sellerName}\nအခြေအနေ: စာချုပ် အကြုံးဝင်နေသေးသည် (ပစ္စည်း ရွေးယူရန် ကျန်ရှိ)`);
-                }
-            } else {
-                speakFeedback("စာချုပ် မှတ်တမ်း မတွေ့ရှိပါ");
-                alert("❌ မှတ်တမ်းမတွေ့ရှိပါ: စကင်ဖတ်လိုက်သော QR Code သည် မမှန်ကန်ပါ သို့မဟုတ် စနစ်ထဲတွင် မရှိပါ။");
-            }
-        }
-
-        // Search Filter
-        window.filterContracts = () => {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allContractsData.filter(item => 
-                (item.voucherId && item.voucherId.toLowerCase().includes(searchText)) ||
-                (item.sellerName && item.sellerName.toLowerCase().includes(searchText)) ||
-                (item.sellerPhone && item.sellerPhone.includes(searchText)) ||
-                (item.itemName && item.itemName.toLowerCase().includes(searchText))
-            );
-            renderTable(filtered);
-        };
-
-        // Status Toggle (With Audio Feedback)
-        window.toggleStatus = async (id, currentStatus) => {
-            const newStatus = currentStatus === "COMPLETED" ? "ACTIVE" : "COMPLETED";
-            try {
-                await updateDoc(doc(db, "contracts", id), { status: newStatus });
-                if (newStatus === "COMPLETED") {
-                    speakFeedback("ပစ္စည်း ပြန်လည် ရွေးယူပြီးကြောင်း အတည်ပြုလိုက်ပါပြီ");
-                }
-                loadContracts();
-            } catch (e) {
-                alert("Status ပြောင်း၍ မရပါ: " + e.message);
-            }
-        };
-
-        // Edit Contract (Protected with Password)
-        window.editContract = (id) => {
-            if (!checkAdminPassword()) return;
-
-            const item = allContractsData.find(c => c.id === id);
-            if (!item) return;
-
-            document.getElementById('editDocId').value = item.id;
-            document.getElementById('generatedVoucherId').innerText = item.voucherId || 'QT-EDIT';
-            document.getElementById('sellerName').value = item.sellerName || '';
-            document.getElementById('sellerPhone').value = item.sellerPhone || '';
-            document.getElementById('sellerNrc').value = item.sellerNrc || '';
-            document.getElementById('sellerAddress').value = item.sellerAddress || '';
-            document.getElementById('itemName').value = item.itemName || '';
-            document.getElementById('payoutAmount').value = item.payoutAmount || 0;
-            document.getElementById('tradeDate').value = item.tradeDate || '';
-
-            calculateDetails();
-            autoUpdateSignature();
-
-            document.getElementById('submitBtnText').innerText = 'စာချုပ် ပြင်ဆင်ချက်အား အတည်ပြုမည်';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        // Delete Contract (Protected with Password)
-        window.deleteContract = async (id) => {
-            if (!checkAdminPassword()) return;
-
-            if (confirm('ဤစာချုပ်မှတ်တမ်းကို ဖျက်ပစ်ရန် သေချာပါသလား။')) {
-                try {
-                    await deleteDoc(doc(db, "contracts", id));
-                    loadContracts();
-                } catch (error) {
-                    alert('ဖျက်၍ မရပါ: ' + error.message);
-                }
-            }
-        };
-
-        window.openTermsModal = () => document.getElementById('termsModal').classList.remove('hidden');
-        window.closeTermsModal = () => document.getElementById('termsModal').classList.add('hidden');
-
-        loadContracts();
+        // Run Initial Calculation
+        calculateRepurchase();
     </script>
 </body>
 </html>
