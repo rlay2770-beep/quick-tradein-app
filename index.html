@@ -3,18 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick TradeIn - စမတ်စာချုပ်နှင့် မှတ်တမ်းစနစ်</title>
+    <title>Quick TradeIn - စမတ်စာချုပ်နှင့် ဘောက်ချာစနစ်</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
         body { font-family: 'Padauk', sans-serif; }
+
+        /* Print / Voucher Dynamic Style */
+        @media print {
+            body * { visibility: hidden; }
+            #voucherPrintArea, #voucherPrintArea * { visibility: visible; }
+            #voucherPrintArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 10px;
+                font-size: 12px;
+                color: black;
+            }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 pb-12">
 
     <!-- Navigation Bar -->
-    <nav class="bg-indigo-900 text-white shadow-md sticky top-0 z-50">
+    <nav class="bg-indigo-900 text-white shadow-md sticky top-0 z-50 no-print">
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-arrows-rotate text-emerald-400 text-xl"></i>
@@ -27,12 +43,12 @@
     </nav>
 
     <!-- Header Section -->
-    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-6 px-4 text-center">
+    <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white py-6 px-4 text-center no-print">
         <h1 class="text-xl md:text-2xl font-bold">ပိုင်ဆိုင်မှု လွှဲပြောင်းနှင့် ပြန်လည်ဝယ်ယူခွင့် စာချုပ်</h1>
         <p class="text-indigo-200 mt-1 text-xs">Quick TradeIn Smart Asset Buy-back System</p>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-6 space-y-8">
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-8 no-print">
         
         <!-- Contract Form -->
         <form id="contractForm" class="bg-white rounded-2xl shadow-xl p-5 md:p-8 space-y-5 border border-slate-100">
@@ -51,7 +67,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">ဖုန်းနံပါတ် *</label>
-                    <input type="tel" id="sellerPhone" value="09123456789" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="tel" id="sellerPhone" value="09440173728" required class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
                 <div>
@@ -134,7 +150,6 @@
                     <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> သိမ်းဆည်းထားသော စာချုပ်မှတ်တမ်းများ
                 </h2>
                 
-                <!-- Search Input -->
                 <div class="flex items-center gap-2 w-full md:w-auto">
                     <input type="text" id="searchInput" onkeyup="filterContracts()" placeholder="အမည် သို့ ဖုန်းနံပါတ်ဖြင့် ရှာမည်..." class="p-2 border border-slate-300 rounded-lg text-xs outline-none w-full md:w-48">
                     <button onclick="loadContracts()" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg text-slate-700">
@@ -166,8 +181,39 @@
 
     </main>
 
+    <!-- Hidden Printable Voucher Template -->
+    <div id="voucherPrintArea" class="hidden">
+        <div style="max-w: 400px; margin: 0 auto; border: 1px dashed #333; padding: 15px; font-family: sans-serif; line-height: 1.5;">
+            <div style="text-align: center; border-bottom: 2px solid #000; pb-2; margin-bottom: 10px;">
+                <h2 style="margin:0; font-size: 18px;">Quick TradeIn</h2>
+                <p style="margin:2px 0; font-size: 10px;">အရောင်းအဝယ်နှင့် ပြန်လည်ဝယ်ယူခွင့် ဘောက်ချာ</p>
+            </div>
+            
+            <table style="width: 100%; font-size: 11px; margin-bottom: 10px;">
+                <tr><td><strong>ရောင်းသူ:</strong></td><td id="vSellerName"></td></tr>
+                <tr><td><strong>ဖုန်းနံပါတ်:</strong></td><td id="vSellerPhone"></td></tr>
+                <tr><td><strong>မှတ်ပုံတင်:</strong></td><td id="vSellerNrc"></td></tr>
+                <tr><td><strong>ပစ္စည်းအမည်:</strong></td><td id="vItemName"></td></tr>
+                <tr><td><strong>ရောင်းချငွေ:</strong></td><td id="vPayout"></td></tr>
+                <tr><td><strong>ဝန်ဆောင်ခ (၈%):</strong></td><td id="vFee"></td></tr>
+                <tr><td style="border-top: 1px solid #ccc; pt-1;"><strong>ပြန်လည်ဝယ်ယူရမည့်ငွေ:</strong></td><td style="border-top: 1px solid #ccc; pt-1; font-weight:bold;" id="vTotal"></td></tr>
+                <tr><td><strong>ရောင်းချသည့်နေ့:</strong></td><td id="vTradeDate"></td></tr>
+                <tr><td><strong>နောက်ဆုံးရက်:</strong></td><td style="color: red; font-weight: bold;" id="vDueDate"></td></tr>
+            </table>
+
+            <div style="border-top: 1px dashed #666; padding-top: 8px; font-size: 9px; text-align: justify; color: #444;">
+                <strong>စည်းကမ်းချက်များ:</strong> ရက်ပေါင်း (၃၀) အတွင်း သတ်မှတ်ငွေဖြင့် ပြန်လည်ဝယ်ယူနိုင်ပါသည်။ (၃၀) ရက်ကျော်လွန်ပါက ပိုင်ဆိုင်မှုအား အပြီးအပိုင် စွန့်လွှတ်ပြီး ဖြစ်ပါသည်။
+            </div>
+
+            <div style="margin-top: 25px; display: flex; justify-content: space-between; font-size: 10px;">
+                <div>ရောင်းသူလက်မှတ်: ____________</div>
+                <div>ဝယ်သူလက်မှတ်: ____________</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Terms Modal -->
-    <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div id="termsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
             <h3 class="text-lg font-bold text-indigo-900 border-b pb-2">Quick TradeIn စည်းကမ်းချက်များ</h3>
             <div class="text-sm text-slate-600 space-y-2 leading-relaxed">
@@ -197,7 +243,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let allContractsData = []; // Local Search အတွက် သိမ်းထားရန်
+        let allContractsData = [];
 
         document.getElementById('tradeDate').valueAsDate = new Date();
 
@@ -288,7 +334,7 @@
                     document.getElementById('submitBtnText').innerText = 'စာချုပ်အား သိမ်းဆည်းမည်';
                     document.getElementById('formModeText').innerText = '';
                 } else {
-                    contractData.status = "ACTIVE"; // ပုံမှန်အားဖြင့် ACTIVE
+                    contractData.status = "ACTIVE";
                     contractData.createdAt = serverTimestamp();
                     await addDoc(collection(db, "contracts"), contractData);
                     alert('စာချုပ်အသစ်ကို သိမ်းဆည်းပြီးပါပြီ။');
@@ -327,7 +373,7 @@
             }
         };
 
-        // Render Table Data
+        // Render Table
         function renderTable(dataArray) {
             const tbody = document.getElementById('historyTableBody');
             if (dataArray.length === 0) {
@@ -353,13 +399,16 @@
                         <td class="p-2.5 text-slate-500">${item.dueDate || '-'}</td>
                         <td class="p-2.5 text-center">${statusBadge}</td>
                         <td class="p-2.5 text-center space-x-1">
-                            <button onclick="toggleStatus('${item.id}', '${item.status}')" class="text-xs ${isCompleted ? 'text-amber-600' : 'text-emerald-600'} hover:underline font-semibold">
-                                ${isCompleted ? 'မပြီးသေးဘုို့ပြောင်း' : 'ဝယ်ယူပြီးပြောင်း'}
+                            <button onclick="printVoucher('${item.id}')" class="text-sky-600 hover:text-sky-800 font-bold">
+                                <i class="fa-solid fa-print"></i> ဘောက်ချာ
                             </button> | 
-                            <button onclick="editContract('${item.id}')" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                            <button onclick="toggleStatus('${item.id}', '${item.status}')" class="text-xs ${isCompleted ? 'text-amber-600' : 'text-emerald-600'} hover:underline font-semibold">
+                                ${isCompleted ? 'မပြီးသေးသို့' : 'ဝယ်ယူပြီး'}
+                            </button> | 
+                            <button onclick="editContract('${item.id}')" class="text-indigo-600 font-semibold">
                                 ပြင်
                             </button> | 
-                            <button onclick="deleteContract('${item.id}')" class="text-red-500 hover:text-red-700 font-semibold">
+                            <button onclick="deleteContract('${item.id}')" class="text-red-500 font-semibold">
                                 ဖျက်
                             </button>
                         </td>
@@ -369,7 +418,28 @@
             tbody.innerHTML = html;
         }
 
-        // Search Filter Function
+        // ဘောက်ချာ ထုတ်ပေးသည့် Function
+        window.printVoucher = (id) => {
+            const item = allContractsData.find(c => c.id === id);
+            if (!item) return;
+
+            document.getElementById('vSellerName').innerText = item.sellerName || '-';
+            document.getElementById('vSellerPhone').innerText = item.sellerPhone || '-';
+            document.getElementById('vSellerNrc').innerText = item.sellerNrc || '-';
+            document.getElementById('vItemName').innerText = item.itemName || '-';
+            document.getElementById('vPayout').innerText = (item.payoutAmount || 0).toLocaleString() + ' ကျပ်';
+            document.getElementById('vFee').innerText = (item.feeAmount || 0).toLocaleString() + ' ကျပ်';
+            document.getElementById('vTotal').innerText = (item.totalBuybackAmount || 0).toLocaleString() + ' ကျပ်';
+            document.getElementById('vTradeDate').innerText = item.tradeDate || '-';
+            document.getElementById('vDueDate').innerText = item.dueDate || '-';
+
+            const printArea = document.getElementById('voucherPrintArea');
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        };
+
+        // Search Filter
         window.filterContracts = () => {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allContractsData.filter(item => 
@@ -380,7 +450,7 @@
             renderTable(filtered);
         };
 
-        // Status Toggle (COMPLETED / ACTIVE)
+        // Status Toggle
         window.toggleStatus = async (id, currentStatus) => {
             const newStatus = currentStatus === "COMPLETED" ? "ACTIVE" : "COMPLETED";
             try {
