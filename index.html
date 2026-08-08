@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ဆိုင်သုံး စာချုပ်နှင့် ပြေစာ စနစ်</title>
+    <title>ဆိုင်သုံး စာချုပ်နှင့် ပြေစာ စနစ် (Store Contract & Receipt System)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -15,7 +15,7 @@
         @media print {
             .no-print { display: none !important; }
             body { background: white !important; padding: 0 !important; }
-            .printable-voucher { border: none !important; shadow: none !important; width: 100% !important; }
+            .printable-voucher { border: none !important; box-shadow: none !important; width: 100% !important; }
         }
         .watermark-badge {
             position: absolute;
@@ -123,7 +123,7 @@
                         </div>
                     </div>
 
-                    <!-- Updated Terms & Conditions Section -->
+                    <!-- Terms & Conditions Section -->
                     <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg text-sm text-amber-900 space-y-2">
                         <div class="font-bold flex items-center text-amber-800">
                             <i class="fa-solid fa-file-contract me-2"></i> စည်းကမ်းချက်များ
@@ -212,7 +212,7 @@
 
     </main>
 
-    <!-- Modal View / Print Voucher (Hidden by Default) -->
+    <!-- Modal View / Print Voucher -->
     <div id="voucherModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
             
@@ -267,7 +267,7 @@
                     </div>
                 </div>
 
-                <!-- Updated Terms & Statement on Voucher -->
+                <!-- Terms & Statement on Voucher -->
                 <div class="text-[11px] text-slate-600 bg-slate-50 p-3 rounded mb-4 border leading-relaxed space-y-1">
                     <p><strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်ပြီး ဝယ်ယူခွင့်စာချုပ်အလိုအလျောက်ပျက်ပြယ်ပြီးဖြစ်သည်။</p>
                     <p class="text-slate-800 font-semibold pt-1 border-t border-slate-200">
@@ -291,7 +291,7 @@
                 </button>
                 <div class="flex space-x-2">
                     <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-sm transition flex items-center">
-                        <i class="fa-solid fa-print me-2"></i> Print ထုတ်မည်
+                        <i class="fa-solid fa-print me-2"></i> Print / PDF အဖြစ်သိမ်းမည်
                     </button>
                 </div>
             </div>
