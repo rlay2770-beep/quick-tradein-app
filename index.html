@@ -3,171 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>စတိုးဆိုင် ပစ္စည်း ပြန်လည်ဝယ်ယူမှုနှင့် စာချုပ် စီမံခန့်ခွဲရေးစနစ်</title>
-
+    <title>ဆိုင်သုံး စာချုပ်နှင့် ပြေစာ စနစ်</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QRCode.js -->
+    <!-- QR Code Generator & Scanner Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Html5-QRCode Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
-        body {
-            font-family: 'Padauk', sans-serif;
-            background-color: #f3f4f6;
-        }
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; padding: 0; margin: 0; }
-            .printable-voucher {
-                box-shadow: none !important;
-                border: none !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0 !important;
-            }
+            body { background: white !important; padding: 0 !important; }
+            .printable-voucher { border: none !important; shadow: none !important; width: 100% !important; }
         }
-        .signature-canvas {
-            border: 2px dashed #cbd5e1;
-            border-radius: 0.5rem;
-            cursor: crosshair;
-            background-color: #ffffff;
-        }
-        /* Watermark Badges */
         .watermark-badge {
             position: absolute;
-            top: 45%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
             padding: 0.5rem 1.5rem;
-            border-radius: 1rem;
+            border-radius: 0.5rem;
+            opacity: 0.25;
             pointer-events: none;
-            text-transform: uppercase;
             white-space: nowrap;
             z-index: 10;
         }
-        .watermark-settled {
-            color: rgba(16, 185, 129, 0.3);
-            border: 5px solid rgba(16, 185, 129, 0.3);
-        }
-        .watermark-expired {
-            color: rgba(220, 38, 38, 0.3);
-            border: 5px solid rgba(220, 38, 38, 0.3);
-        }
+        .watermark-settled { border: 4px solid #059669; color: #059669; }
+        .watermark-expired { border: 4px solid #dc2626; color: #dc2626; }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-12">
 
-    <!-- Top Navigation Bar -->
-    <header class="bg-amber-600 text-white shadow-lg no-print sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-gem text-2xl text-amber-200 me-2"></i>
-                <h1 class="text-xl font-bold tracking-wide">စတိုးဆိုင် ပစ္စည်း ပြန်လည်ဝယ်ယူမှုနှင့် စာချုပ်စနစ်</h1>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="switchTab('create')" id="tab-btn-create" class="px-3 py-2 rounded-lg bg-amber-700 hover:bg-amber-800 transition text-sm font-semibold flex items-center">
-                    <i class="fa-solid fa-plus-circle me-1"></i> စာချုပ်အသစ်
+    <!-- Header & Navigation -->
+    <header class="bg-amber-900 text-white shadow-lg no-print">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold flex items-center">
+                <i class="fa-solid fa-store me-2"></i> စတိုးဆိုင် / ရွှေဆိုင် စာချုပ်စနစ်
+            </h1>
+            <nav class="flex space-x-2">
+                <button id="tab-btn-create" onclick="switchTab('create')" class="px-3 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg text-sm font-semibold transition flex items-center">
+                    <i class="fa-solid fa-plus me-1.5"></i> စာချုပ်အသစ်
                 </button>
-                <button onclick="switchTab('list')" id="tab-btn-list" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 transition text-sm font-semibold flex items-center">
-                    <i class="fa-solid fa-list-check me-1"></i> စာချုပ်များ
+                <button id="tab-btn-list" onclick="switchTab('list')" class="px-3 py-2 hover:bg-amber-800 rounded-lg text-sm font-semibold transition flex items-center">
+                    <i class="fa-solid fa-list-check me-1.5"></i> စာချုပ်များ
                 </button>
-                <button onclick="switchTab('scanner')" id="tab-btn-scanner" class="px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 transition text-sm font-semibold flex items-center">
-                    <i class="fa-solid fa-qrcode me-1"></i> QR ဖတ်ရန်
+                <button id="tab-btn-scanner" onclick="switchTab('scanner')" class="px-3 py-2 hover:bg-amber-800 rounded-lg text-sm font-semibold transition flex items-center">
+                    <i class="fa-solid fa-qrcode me-1.5"></i> QR စကန်ဖတ်ရန်
                 </button>
-            </div>
+            </nav>
         </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 no-print">
+    <main class="max-w-4xl mx-auto px-4 mt-6">
 
         <!-- TAB 1: Create / Edit Contract Form -->
-        <section id="sec-create" class="block">
-            <div class="bg-white rounded-xl shadow-md p-6 max-w-4xl mx-auto border border-slate-200">
-                <h2 id="formTitle" class="text-xl font-bold text-amber-800 mb-6 border-b pb-3 flex items-center">
+        <section id="sec-create">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
+                <h2 id="formTitle" class="text-xl font-bold text-amber-800 mb-6 flex items-center">
                     <i class="fa-solid fa-file-signature me-2"></i> စာချုပ်အသစ် ဖန်တီးယူခြင်း
                 </h2>
 
-                <form id="contractForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                <form id="contractForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
                     <input type="hidden" id="editDocId" value="">
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Customer Name -->
                         <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">ဝယ်ယူသူ/ရောင်းချသူ အမည် <span class="text-red-500">*</span></label>
-                            <input type="text" id="custName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="အမည် ရိုက်ထည့်ပါ">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ဝယ်ယူသူ/ရောင်းသူ အမည် *</label>
+                            <input type="text" id="custName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="အမည် ရိုက်ထည့်ပါ">
                         </div>
-                        <!-- Phone Number -->
                         <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">ဖုန်းနံပါတ် <span class="text-red-500">*</span></label>
-                            <input type="tel" id="custPhone" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="၀၉xxxxxxxxx">
-                        </div>
-                        <!-- NRC Number -->
-                        <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">မှတ်ပုံတင်အမှတ်</label>
-                            <input type="text" id="custNRC" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="၁၂/သဃက(နိုင်)၁၂၃၄၅၆">
-                        </div>
-                        <!-- Item Name/Description -->
-                        <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">ပစ္စည်းအမည်နှင့် အမျိုးအစား <span class="text-red-500">*</span></label>
-                            <input type="text" id="itemName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="ဥပမာ - ၁၅ ပဲရည် ရွှေဆွဲကြိုး / VIVO Phone">
-                        </div>
-                        <!-- Purchase/Buyback Price -->
-                        <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">သတ်မှတ် ငွေပမာဏ (ကျပ်) <span class="text-red-500">*</span></label>
-                            <input type="number" id="itemPrice" required min="0" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0.00">
-                        </div>
-                        <!-- Days Limit -->
-                        <div>
-                            <label class="block text-sm font-semibold mb-1 text-slate-700">ပြန်လည်ဝယ်ယူနိုင်သည့် သက်တမ်း</label>
-                            <input type="text" value="ရက်ပေါင်း (၃၀) အတွင်း" disabled class="w-full px-3 py-2 border rounded-lg bg-slate-100 text-slate-600 font-semibold">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ဖုန်းနံပါတ် *</label>
+                            <input type="tel" id="custPhone" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="09xxxxxxxxx">
                         </div>
                     </div>
 
-                    <!-- Signature & Fingerprint Input Selector -->
-                    <div class="border p-4 rounded-lg bg-slate-50">
-                        <label class="block text-sm font-semibold text-slate-800 mb-2">
-                            ဝယ်ယူသူ/ရောင်းသူ အတည်ပြုချက် (လက်မှတ် သို့မဟုတ် လက်ဗွေရာ) <span class="text-red-500">*</span>
-                        </label>
-                        
-                        <!-- Toggle Options -->
-                        <div class="flex space-x-4 mb-3 text-sm">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="sigType" value="draw" checked onchange="toggleSigMethod('draw')" class="me-1 text-amber-600">
-                                <span>မောက်စ်/Touch ဖြင့် လက်မှတ်ထိုးမည်</span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">မှတ်ပုံတင်အမှတ် (အတို/အပြည့်)</label>
+                            <input type="text" id="custNRC" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="၁၂/သဃက(နိုင်)၁၂၃၄၅၆">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ပစ္စည်းအမည်/အမျိုးအစား *</label>
+                            <input type="text" id="itemName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="ဥပမာ - ရွှေဆွဲကြိုး ၁ ကျပ်သား">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">သတ်မှတ် ငွေပမာဏ (ကျပ်) *</label>
+                        <input type="number" id="itemPrice" required min="0" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0.00">
+                    </div>
+
+                    <!-- Signature / Fingerprint Input -->
+                    <div class="border-t pt-4">
+                        <label class="block text-xs font-semibold text-slate-600 mb-2">လက်မှတ် သို့မဟုတ် လက်ဗွေ ပုံရိပ် *</label>
+                        <div class="flex items-center space-x-4 mb-3">
+                            <label class="flex items-center text-sm cursor-pointer">
+                                <input type="radio" name="sigType" value="draw" checked onclick="toggleSigMethod('draw')" class="me-1 text-amber-600"> စခရင်ပေါ်တွင် လက်မှတ်ရေးမည်
                             </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="sigType" value="upload" onchange="toggleSigMethod('upload')" class="me-1 text-amber-600">
-                                <span>လက်ဗွေ/လက်မှတ် ပုံရိပ် Upload တင်မည်</span>
+                            <label class="flex items-center text-sm cursor-pointer">
+                                <input type="radio" name="sigType" value="upload" onclick="toggleSigMethod('upload')" class="me-1 text-amber-600"> ပုံရိပ်ဖိုင် တင်မည်
                             </label>
                         </div>
 
-                        <!-- Option A: Draw Signature Canvas -->
-                        <div id="drawSigSection">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-slate-500">အောက်ပါ ကွက်လပ်တွင် လက်မှတ်ထိုးပါ</span>
-                                <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline">
-                                    <i class="fa-solid fa-rotate-left me-1"></i> ပြန်ရေးမည်
-                                </button>
-                            </div>
-                            <canvas id="sigCanvas" width="500" height="140" class="signature-canvas w-full"></canvas>
+                        <!-- Canvas Option -->
+                        <div id="drawSigSection" class="space-y-2">
+                            <canvas id="sigCanvas" width="350" height="150" class="border rounded-lg bg-slate-50 cursor-crosshair touch-none mx-auto sm:mx-0"></canvas>
+                            <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline flex items-center">
+                                <i class="fa-solid fa-rotate-left me-1"></i> ပြန်လည်ရေးဆွဲမည်
+                            </button>
                         </div>
 
-                        <!-- Option B: Upload Fingerprint / Signature Image -->
-                        <div id="uploadSigSection" class="hidden">
-                            <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 bg-white">
-                                <input type="file" id="fingerprintFile" accept="image/*" onchange="previewUploadedImage(event)" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer">
-                                <p class="text-xs text-slate-400 mt-2">လက်ဗွေဖတ်စက်မှ ပုံရိပ် သို့မဟုတ် ဖုန်းဖြင့် ရိုက်ကူးထားသော လက်ဗွေ/လက်မှတ် ပုံရိပ် တင်ပါ</p>
-                                <img id="uploadedPreview" class="h-24 mt-2 object-contain hidden border p-1 rounded" alt="Preview">
-                            </div>
+                        <!-- Upload Option -->
+                        <div id="uploadSigSection" class="hidden space-y-2">
+                            <input type="file" id="sigFile" accept="image/*" onchange="previewUploadedImage(event)" class="text-xs">
+                            <img id="uploadedPreview" class="h-20 object-contain hidden border p-1 rounded" alt="Preview">
                         </div>
                     </div>
 
@@ -176,7 +128,7 @@
                         <div class="font-bold flex items-center text-amber-800">
                             <i class="fa-solid fa-file-contract me-2"></i> စည်းကမ်းချက်များ
                         </div>
-                        <p class="leading-relaxed">
+                        <p class="leading-relaxed text-xs sm:text-sm">
                             <strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။
                         </p>
                         <div class="flex items-start mt-3 pt-2 border-t border-amber-200">
@@ -188,151 +140,7 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm transition hidden">
-                            မလုပ်တော့ပါ
-                        </button>
-                        <button type="submit" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-md transition flex items-center">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> စာချုပ်သိမ်းဆည်းမည်
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </section>
-
-        <!-- TAB 2: Contracts List -->
-        <section id="sec-list" class="hidden">
-            <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h2 class="text-xl font-bold text-amber-800 flex items-center">
-                        <i class="fa-solid fa-folder-open me-2"></i> စာချုပ်များ စာရင်း
-                    </h2>
-                    
-                    <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <!-- Filter Selector -->
-                        <select id="statusFilter" onchange="renderContractTable()" class="px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none">
-                            <option value="ALL">စာချုပ်အားလုံး</option>
-                            <option value="ACTIVE">ကျန်ရှိနေသေးသော စာချုပ်များ</option>
-                            <option value="SETTLED">ပြန်လည်ဝယ်ယူပြီး စာချုပ်များ</option>
-                            <option value="EXPIRED">သက်တမ်းလွန် ဆိုင်ပိုင်ဖြစ်သွားသော စာချုပ်များ</option>
-                        </select>
-
-                        <!-- Search Box -->
-                        <div class="w-full md:w-64 relative">
-                            <input type="text" id="searchInput" oninput="renderContractTable()" placeholder="အမည် သို့မဟုတ် QR ID ဖြင့် ရှာပါ..." class="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 border-b text-slate-700 text-sm">
-                                <th class="p-3">စာချုပ် ID</th>
-                                <th class="p-3">အမည်</th>
-                                <th class="p-3">ဖုန်း</th>
-                                <th class="p-3">ပစ္စည်း</th>
-                                <th class="p-3">ကျသင့်ငွေ</th>
-                                <th class="p-3">ချုပ်ဆိုသည့်ရက်</th>
-                                <th class="p-3">အခြေအနေ</th>
-                                <th class="p-3 text-center">လုပ်ဆောင်ချက်</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contractTableBody" class="text-sm divide-y">
-                            <!-- JS Dynamic Content -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: QR Scanner -->
-        <section id="sec-scanner" class="hidden">
-            <div class="bg-white rounded-xl shadow-md p-6 max-w-lg mx-auto border border-slate-200 text-center">
-                <h2 class="text-xl font-bold text-amber-800 mb-4 flex items-center justify-center">
-                    <i class="fa-solid fa-qrcode me-2"></i> QR Code ဖတ်ရှု စစ်ဆေးရန်
-                </h2>
-                <div id="reader" class="w-full rounded-lg overflow-hidden border"></div>
-                <p class="text-xs text-slate-500 mt-3">ဘောက်ချာပေါ်ရှိ QR code အား ကင်မရာရှေ့တွင် ပြပေးပါ</p>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Modal View / Print Voucher (Hidden by Default) -->
-    <div id="voucherModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-            
-            <button onclick="closeVoucherModal()" class="no-print absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <!-- Printable Voucher Area -->
-            <div id="voucherContent" class="printable-voucher relative p-4 border border-slate-200 rounded-lg bg-white">
-                
-                <!-- Dynamic Watermark Badges -->
-                <div id="settledWatermark" class="watermark-badge watermark-settled hidden">
-                    ပြန်လည်ဝယ်ယူပြီး
-                </div>
-                <div id="expiredWatermark" class="watermark-badge watermark-expired hidden">
-                    သက်တမ်းလွန် - ဆိုင်ပိုင်ပစ္စည်း
-                </div>
-
-                <div class="text-center border-b pb-4 mb-4">
-                    <h2 class="text-2xl font-bold text-amber-900">စတိုးဆိုင် / ရွှေဆိုင်</h2>
-                    <p class="text-xs text-slate-500">ပစ္စည်း ပြန်လည်ဝယ်ယူမှု သက်သေခံ ပြေစာ (Receipt)</p>
-                    <p class="text-xs font-semibold text-slate-700 mt-1" id="vDocId">ID: -</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                    <div>
-                        <p class="text-slate-500 text-xs">ဝယ်ယူသူ/ရောင်းသူ အမည်</p>
-                        <p class="font-bold text-slate-800" id="vCustName">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">ဖုန်းနံပါတ်</p>
-                        <p class="font-bold text-slate-800" id="vCustPhone">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">မှတ်ပုံတင်အမှတ်</p>
-                        <p class="font-bold text-slate-800" id="vCustNRC">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">ထုတ်ပေးသည့် ရက်စွဲ</p>
-                        <p class="font-bold text-slate-800" id="vDate">-</p>
-                    </div>
-                </div>
-
-                <div class="border-t border-b py-3 mb-4">
-                    <div class="flex justify-between items-center mb-1 text-sm">
-                        <span class="text-slate-600">ပစ္စည်းအမည်:</span>
-                        <span class="font-bold text-slate-900" id="vItemName">-</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-600">သတ်မှတ် ငွေပမာဏ:</span>
-                        <span class="font-bold text-amber-800 text-base" id="vItemPrice">- ကျပ်</span>
-                    </div>
-                </div>
-
-                 <!-- Updated Terms & Conditions Section -->
-                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg text-sm text-amber-900 space-y-2">
-                        <div class="font-bold flex items-center text-amber-800">
-                            <i class="fa-solid fa-file-contract me-2"></i> စည်းကမ်းချက်များ
-                        </div>
-                        <p class="leading-relaxed">
-                            <strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။
-                        </p>
-                        <div class="flex items-start mt-3 pt-2 border-t border-amber-200">
-                            <input type="checkbox" id="termsCheck" required class="mt-1 me-2 h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer">
-                            <label for="termsCheck" class="text-xs text-slate-700 font-medium cursor-pointer">
-                                [✓] ကျွန်ုပ်သည် အထက်ပါ စည်းကမ်းချက်များအားလုံးကို ဖတ်ရှုနားလည်ပြီး မိမိဆန္ဒအလျောက် သဘောတူ ဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်/လက်ဗွေ ရေးထိုးပါသည်။
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="flex justify-end space-x-2">
+                    <div class="flex justify-end space-x-2 pt-2">
                         <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm transition hidden">
                             မလုပ်တော့ပါ
                         </button>
@@ -491,7 +299,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Code Structure -->
+    <!-- JavaScript Logic -->
     <script>
         // System State
         let contractsData = JSON.parse(localStorage.getItem('store_contracts_db')) || [];
@@ -502,12 +310,14 @@
         // Admin Security System Config
         const ADMIN_PASSWORD = "1234";
 
-        // Signature Canvas Logic
-        const canvas = document.getElementById('sigCanvas');
-        const ctx = canvas.getContext('2d');
+        // Canvas Variables
+        let canvas, ctx;
         let isDrawing = false;
 
         function initCanvas() {
+            canvas = document.getElementById('sigCanvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
             ctx.strokeStyle = "#0f172a";
             ctx.lineWidth = 2;
             ctx.lineCap = "round";
@@ -548,10 +358,13 @@
         }
 
         function clearSignature() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (ctx && canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
         }
 
         function isCanvasBlank() {
+            if (!ctx || !canvas) return true;
             const pixelBuffer = new Uint32Array(
                 ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
             );
@@ -635,7 +448,7 @@
             }
         }
 
-         // Save or Edit Contract Form Handling
+        // Save or Edit Contract Form Handling
         function handleFormSubmit(e) {
             e.preventDefault();
 
