@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ဆိုင်သုံး စာချုပ်နှင့် ပြေစာ စနစ် (Store Contract & Receipt System)</title>
+    <title>Quick Trade-In & Contract System (Firebase Integrated)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QR Code Generator & Scanner Libraries -->
+    <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <!-- Firebase SDKs (v9 Compat Mode for HTML Direct Script) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
     <style>
         @media print {
             .no-print { display: none !important; }
@@ -19,10 +24,10 @@
         }
         .watermark-badge {
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 2rem;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 2.2rem;
             font-weight: 800;
             padding: 0.5rem 1.5rem;
             border-radius: 0.5rem;
@@ -33,119 +38,143 @@
         }
         .watermark-settled { border: 4px solid #059669; color: #059669; }
         .watermark-expired { border: 4px solid #dc2626; color: #dc2626; }
+        .watermark-cancelled { border: 4px solid #6b7280; color: #6b7280; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 font-sans pb-12">
 
-    <!-- Header & Navigation -->
-    <header class="bg-amber-900 text-white shadow-lg no-print">
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-lg no-print">
         <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 class="text-xl font-bold flex items-center">
-                <i class="fa-solid fa-store me-2"></i> စတိုးဆိုင် / ရွှေဆိုင် စာချုပ်စနစ်
+                <i class="fa-solid fa-shield-halved text-amber-500 me-2"></i> Trade-In Evidence System (Cloud)
             </h1>
             <nav class="flex space-x-2">
-                <button id="tab-btn-create" onclick="switchTab('create')" class="px-3 py-2 bg-amber-800 hover:bg-amber-700 rounded-lg text-sm font-semibold transition flex items-center">
+                <button id="tab-btn-create" onclick="switchTab('create')" class="px-3 py-2 bg-amber-600 rounded-lg text-sm font-semibold transition flex items-center">
                     <i class="fa-solid fa-plus me-1.5"></i> စာချုပ်အသစ်
                 </button>
-                <button id="tab-btn-list" onclick="switchTab('list')" class="px-3 py-2 hover:bg-amber-800 rounded-lg text-sm font-semibold transition flex items-center">
-                    <i class="fa-solid fa-list-check me-1.5"></i> စာချုပ်များ
-                </button>
-                <button id="tab-btn-scanner" onclick="switchTab('scanner')" class="px-3 py-2 hover:bg-amber-800 rounded-lg text-sm font-semibold transition flex items-center">
-                    <i class="fa-solid fa-qrcode me-1.5"></i> QR စကန်ဖတ်ရန်
+                <button id="tab-btn-list" onclick="switchTab('list')" class="px-3 py-2 hover:bg-slate-800 rounded-lg text-sm font-semibold transition flex items-center">
+                    <i class="fa-solid fa-database me-1.5"></i> စာချုပ် မှတ်တမ်းများ
                 </button>
             </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
+    <main class="max-w-5xl mx-auto px-4 mt-6">
 
-        <!-- TAB 1: Create / Edit Contract Form -->
+        <!-- TAB 1: Form Section -->
         <section id="sec-create">
             <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
-                <h2 id="formTitle" class="text-xl font-bold text-amber-800 mb-6 flex items-center">
-                    <i class="fa-solid fa-file-signature me-2"></i> စာချုပ်အသစ် ဖန်တီးယူခြင်း
+                <h2 id="formTitle" class="text-xl font-bold text-slate-800 mb-6 flex items-center border-b pb-3">
+                    <i class="fa-solid fa-file-contract text-amber-600 me-2"></i> စာချုပ်အသစ်နှင့် သက်သေအထောက်အထား မှတ်တမ်းတင်ခြင်း
                 </h2>
 
-                <form id="contractForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <form id="contractForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
                     <input type="hidden" id="editDocId" value="">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ဝယ်ယူသူ/ရောင်းသူ အမည် *</label>
-                            <input type="text" id="custName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="အမည် ရိုက်ထည့်ပါ">
+                    <!-- Section 1: Customer KYC -->
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                        <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                            <i class="fa-solid fa-id-card text-blue-600 me-2"></i> ၁။ ရောင်းချသူ/ဝယ်ယူသူ အချက်အလက် (KYC)
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">အမည် *</label>
+                                <input type="text" id="custName" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">ဖုန်းနံပါတ် *</label>
+                                <input type="tel" id="custPhone" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">မှတ်ပုံတင်အမှတ် *</label>
+                                <input type="text" id="custNRC" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500" placeholder="၁၂/သဃက(နိုင်)၁၂၃၄၅၆">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ဖုန်းနံပါတ် *</label>
-                            <input type="tel" id="custPhone" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="09xxxxxxxxx">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">မှတ်ပုံတင်အမှတ် (အတို/အပြည့်)</label>
-                            <input type="text" id="custNRC" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="၁၂/သဃက(နိုင်)၁၂၃၄၅၆">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">ပစ္စည်းအမည်/အမျိုးအစား *</label>
-                            <input type="text" id="itemName" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="ဥပမာ - ရွှေဆွဲကြိုး ၁ ကျပ်သား">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">သတ်မှတ် ငွေပမာဏ (ကျပ်) *</label>
-                        <input type="number" id="itemPrice" required min="0" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0.00">
-                    </div>
-
-                    <!-- Signature / Fingerprint Input -->
-                    <div class="border-t pt-4">
-                        <label class="block text-xs font-semibold text-slate-600 mb-2">လက်မှတ် သို့မဟုတ် လက်ဗွေ ပုံရိပ် *</label>
-                        <div class="flex items-center space-x-4 mb-3">
-                            <label class="flex items-center text-sm cursor-pointer">
-                                <input type="radio" name="sigType" value="draw" checked onclick="toggleSigMethod('draw')" class="me-1 text-amber-600"> စခရင်ပေါ်တွင် လက်မှတ်ရေးမည်
-                            </label>
-                            <label class="flex items-center text-sm cursor-pointer">
-                                <input type="radio" name="sigType" value="upload" onclick="toggleSigMethod('upload')" class="me-1 text-amber-600"> ပုံရိပ်ဖိုင် တင်မည်
-                            </label>
-                        </div>
-
-                        <!-- Canvas Option -->
-                        <div id="drawSigSection" class="space-y-2">
-                            <canvas id="sigCanvas" width="350" height="150" class="border rounded-lg bg-slate-50 cursor-crosshair touch-none mx-auto sm:mx-0"></canvas>
-                            <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline flex items-center">
-                                <i class="fa-solid fa-rotate-left me-1"></i> ပြန်လည်ရေးဆွဲမည်
-                            </button>
-                        </div>
-
-                        <!-- Upload Option -->
-                        <div id="uploadSigSection" class="hidden space-y-2">
-                            <input type="file" id="sigFile" accept="image/*" onchange="previewUploadedImage(event)" class="text-xs">
-                            <img id="uploadedPreview" class="h-20 object-contain hidden border p-1 rounded" alt="Preview">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">မှတ်ပုံတင် အရှေ့/အနောက် ဓာတ်ပုံ</label>
+                                <input type="file" id="nrcPhoto" accept="image/*" class="text-xs w-full border p-1 rounded bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">လူ+ပစ္စည်း တွဲရိုက် ဓာတ်ပုံ (Live Photo)</label>
+                                <input type="file" id="sellerPhoto" accept="image/*" class="text-xs w-full border p-1 rounded bg-white">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Terms & Conditions Section -->
-                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg text-sm text-amber-900 space-y-2">
-                        <div class="font-bold flex items-center text-amber-800">
-                            <i class="fa-solid fa-file-contract me-2"></i> စည်းကမ်းချက်များ
+                    <!-- Section 2: Item Specification -->
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                        <h3 class="font-bold text-slate-700 text-sm flex items-center">
+                            <i class="fa-solid fa-mobile-screen text-emerald-600 me-2"></i> ၂။ ပစ္စည်း အသေးစိတ် အချက်အလက်များ
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Brand / အမျိုးအစား *</label>
+                                <input type="text" id="itemBrand" placeholder="ဥပမာ- OPPO, Apple" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Model အမည် *</label>
+                                <input type="text" id="itemModel" placeholder="ဥပမာ- Reno 8 Pro" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">IMEI 1 / Serial No *</label>
+                                <input type="text" id="itemIMEI1" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">IMEI 2 (ပါဝင်ပါက)</label>
+                                <input type="text" id="itemIMEI2" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
                         </div>
-                        <p class="leading-relaxed text-xs sm:text-sm">
-                            <strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။
-                        </p>
-                        <div class="flex items-start mt-3 pt-2 border-t border-amber-200">
-                            <input type="checkbox" id="termsCheck" required class="mt-1 me-2 h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer">
-                            <label for="termsCheck" class="text-xs text-slate-700 font-medium cursor-pointer">
-                                [✓] ကျွန်ုပ်သည် အထက်ပါ စည်းကမ်းချက်များအားလုံးကို ဖတ်ရှုနားလည်ပြီး မိမိဆန္ဒအလျောက် သဘောတူ ဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်/လက်ဗွေ ရေးထိုးပါသည်။
-                            </label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">အရောင် / Storage</label>
+                                <input type="text" id="itemSpecs" placeholder="Black / 256GB" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">သတ်မှတ် ငွေပမာဏ (ကျပ်) *</label>
+                                <input type="number" id="itemPrice" required min="0" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">စာချုပ် သက်တမ်း (ရက်)</label>
+                                <input type="number" id="contractDuration" value="30" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">ပစ္စည်း/အခြစ်အရကောက် ဓာတ်ပုံ</label>
+                                <input type="file" id="itemPhoto" accept="image/*" class="text-xs w-full border p-1 rounded bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">IMEI Screen / ဘောက်စ် ဓာတ်ပုံ</label>
+                                <input type="file" id="imeiPhoto" accept="image/*" class="text-xs w-full border p-1 rounded bg-white">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="flex justify-end space-x-2 pt-2">
-                        <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm transition hidden">
-                            မလုပ်တော့ပါ
+                    <!-- Section 3: Digital Signature -->
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-700 mb-2">၃။ ဝယ်ယူသူ/ရောင်းချသူ လက်မှတ် ရေးထိုးရန် *</label>
+                        <canvas id="sigCanvas" width="350" height="130" class="border rounded-lg bg-white cursor-crosshair touch-none mx-auto sm:mx-0 shadow-inner"></canvas>
+                        <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline mt-1 flex items-center">
+                            <i class="fa-solid fa-rotate-left me-1"></i> ပြန်လည်ရေးဆွဲမည်
                         </button>
-                        <button type="submit" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-md transition flex items-center">
-                            <i class="fa-solid fa-floppy-disk me-2"></i> စာချုပ်သိမ်းဆည်းမည်
+                    </div>
+
+                    <!-- Section 4: Legal Terms -->
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg text-xs text-amber-900 leading-relaxed space-y-2">
+                        <p><strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်း (၃၀) အတွင်း" သို့မဟုတ် သတ်မှတ် Due Date အမီ ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။</p>
+                        <label class="flex items-center text-slate-800 font-semibold cursor-pointer">
+                            <input type="checkbox" id="termsCheck" required class="me-2 h-4 w-4 text-amber-600 rounded border-slate-300">
+                            [✓] စည်းကမ်းချက်များအားလုံးကို ဖတ်ရှုနားလည်ပြီး သဘောတူ ဝန်ခံပါသည်။
+                        </label>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm hidden">မလုပ်တော့ပါ</button>
+                        <button type="submit" id="saveBtn" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-md text-sm transition flex items-center">
+                            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Firebase သို့ သိမ်းဆည်းမည်
                         </button>
                     </div>
                 </form>
@@ -155,581 +184,446 @@
         <!-- TAB 2: Contracts List -->
         <section id="sec-list" class="hidden">
             <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h2 class="text-xl font-bold text-amber-800 flex items-center">
-                        <i class="fa-solid fa-folder-open me-2"></i> စာချုပ်များ စာရင်း
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                        <i class="fa-solid fa-server text-blue-600 me-2"></i> Cloud Firestore မှတ်တမ်းများ
                     </h2>
-                    
                     <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <!-- Filter Selector -->
-                        <select id="statusFilter" onchange="renderContractTable()" class="px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500 outline-none">
-                            <option value="ALL">စာချုပ်အားလုံး</option>
+                        <select id="statusFilter" onchange="fetchContractsFromFirestore()" class="px-3 py-2 border rounded-lg text-sm bg-white outline-none">
+                            <option value="ALL">စာချုပ် အားလုံး</option>
                             <option value="ACTIVE">ကျန်ရှိနေသေးသော စာချုပ်များ</option>
                             <option value="SETTLED">ပြန်လည်ဝယ်ယူပြီး စာချုပ်များ</option>
-                            <option value="EXPIRED">သက်တမ်းလွန် ဆိုင်ပိုင်ဖြစ်သွားသော စာချုပ်များ</option>
+                            <option value="EXPIRED">သက်တမ်းလွန် စာချုပ်များ</option>
+                            <option value="CANCELLED">ပယ်ဖျက်ထားသော စာချုပ်များ</option>
                         </select>
-
-                        <!-- Search Box -->
-                        <div class="w-full md:w-64 relative">
-                            <input type="text" id="searchInput" oninput="renderContractTable()" placeholder="အမည် သို့မဟုတ် QR ID ဖြင့် ရှာပါ..." class="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
-                        </div>
+                        <input type="text" id="searchInput" oninput="fetchContractsFromFirestore()" placeholder="အမည် / IMEI / ID ဖြင့် ရှာပါ..." class="px-3 py-2 border rounded-lg text-sm outline-none">
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-100 border-b text-slate-700 text-sm">
+                            <tr class="bg-slate-100 border-b text-slate-700 text-xs uppercase font-bold">
                                 <th class="p-3">စာချုပ် ID</th>
-                                <th class="p-3">အမည်</th>
-                                <th class="p-3">ဖုန်း</th>
-                                <th class="p-3">ပစ္စည်း</th>
+                                <th class="p-3">အမည် / ဖုန်း</th>
+                                <th class="p-3">ပစ္စည်း / IMEI</th>
                                 <th class="p-3">ကျသင့်ငွေ</th>
-                                <th class="p-3">ချုပ်ဆိုသည့်ရက်</th>
+                                <th class="p-3">Due Date</th>
                                 <th class="p-3">အခြေအနေ</th>
                                 <th class="p-3 text-center">လုပ်ဆောင်ချက်</th>
                             </tr>
                         </thead>
                         <tbody id="contractTableBody" class="text-sm divide-y">
-                            <!-- JS Dynamic Content -->
+                            <!-- Dynamic Content -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- TAB 3: QR Scanner -->
-        <section id="sec-scanner" class="hidden">
-            <div class="bg-white rounded-xl shadow-md p-6 max-w-lg mx-auto border border-slate-200 text-center">
-                <h2 class="text-xl font-bold text-amber-800 mb-4 flex items-center justify-center">
-                    <i class="fa-solid fa-qrcode me-2"></i> QR Code ဖတ်ရှု စစ်ဆေးရန်
-                </h2>
-                <div id="reader" class="w-full rounded-lg overflow-hidden border"></div>
-                <p class="text-xs text-slate-500 mt-3">ဘောက်ချာပေါ်ရှိ QR code အား ကင်မရာရှေ့တွင် ပြပေးပါ</p>
-            </div>
-        </section>
-
     </main>
 
-    <!-- Modal View / Print Voucher -->
+    <!-- Modal Voucher -->
     <div id="voucherModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-            
-            <button onclick="closeVoucherModal()" class="no-print absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeVoucherModal()" class="no-print absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
 
-            <!-- Printable Voucher Area -->
-            <div id="voucherContent" class="printable-voucher relative p-4 border border-slate-200 rounded-lg bg-white">
+            <div id="voucherContent" class="printable-voucher relative p-4 border border-slate-200 rounded-lg bg-white space-y-4">
                 
-                <!-- Dynamic Watermark Badges -->
-                <div id="settledWatermark" class="watermark-badge watermark-settled hidden">
-                    ပြန်လည်ဝယ်ယူပြီး
-                </div>
-                <div id="expiredWatermark" class="watermark-badge watermark-expired hidden">
-                    သက်တမ်းလွန် - ဆိုင်ပိုင်ပစ္စည်း
+                <div id="settledWatermark" class="watermark-badge watermark-settled hidden">ပြန်လည်ဝယ်ယူပြီး</div>
+                <div id="expiredWatermark" class="watermark-badge watermark-expired hidden">သက်တမ်းလွန် - ဆိုင်ပိုင်</div>
+                <div id="cancelledWatermark" class="watermark-badge watermark-cancelled hidden">ပယ်ဖျက်ပြီး</div>
+
+                <div class="text-center border-b pb-3">
+                    <h2 class="text-2xl font-bold text-slate-900">Trade-In & Store Contract</h2>
+                    <p class="text-xs text-slate-500">ပစ္စည်း ဝယ်ယူ/သိမ်းဆည်းမှု သက်သေခံ စာချုပ်ပြေစာ</p>
+                    <p class="text-xs font-mono font-bold text-amber-800 mt-1" id="vDocId">ID: -</p>
                 </div>
 
-                <div class="text-center border-b pb-4 mb-4">
-                    <h2 class="text-2xl font-bold text-amber-900">စတိုးဆိုင် / ရွှေဆိုင်</h2>
-                    <p class="text-xs text-slate-500">ပစ္စည်း ပြန်လည်ဝယ်ယူမှု သက်သေခံ ပြေစာ (Receipt)</p>
-                    <p class="text-xs font-semibold text-slate-700 mt-1" id="vDocId">ID: -</p>
+                <div class="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded">
+                    <div><span class="text-slate-500">အမည်:</span> <strong id="vCustName" class="text-slate-800">-</strong></div>
+                    <div><span class="text-slate-500">ဖုန်း:</span> <strong id="vCustPhone" class="text-slate-800">-</strong></div>
+                    <div><span class="text-slate-500">မှတ်ပုံတင်:</span> <strong id="vCustNRC" class="text-slate-800">-</strong></div>
+                    <div><span class="text-slate-500">စတင်က်ရက်:</span> <strong id="vStartDate" class="text-slate-800">-</strong></div>
+                    <div><span class="text-slate-500">Due Date (နောက်ဆုံးရက်):</span> <strong id="vDueDate" class="text-red-700 font-bold">-</strong></div>
+                    <div><span class="text-slate-500">ကျသင့်ငွေ:</span> <strong id="vItemPrice" class="text-amber-800 font-bold text-sm">- ကျပ်</strong></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
-                    <div>
-                        <p class="text-slate-500 text-xs">ဝယ်ယူသူ/ရောင်းသူ အမည်</p>
-                        <p class="font-bold text-slate-800" id="vCustName">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">ဖုန်းနံပါတ်</p>
-                        <p class="font-bold text-slate-800" id="vCustPhone">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">မှတ်ပုံတင်အမှတ်</p>
-                        <p class="font-bold text-slate-800" id="vCustNRC">-</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-500 text-xs">ထုတ်ပေးသည့် ရက်စွဲ</p>
-                        <p class="font-bold text-slate-800" id="vDate">-</p>
-                    </div>
+                <div class="border p-3 rounded text-xs space-y-1">
+                    <div class="font-bold text-slate-700 border-b pb-1 mb-1">ပစ္စည်း အချက်အလက်များ</div>
+                    <div><span class="text-slate-500">Brand & Model:</span> <span id="vItemModel" class="font-semibold">-</span></div>
+                    <div><span class="text-slate-500">IMEI 1:</span> <span id="vIMEI1" class="font-mono font-semibold">-</span></div>
+                    <div><span class="text-slate-500">Specs / Details:</span> <span id="vSpecs">-</span></div>
                 </div>
 
-                <div class="border-t border-b py-3 mb-4">
-                    <div class="flex justify-between items-center mb-1 text-sm">
-                        <span class="text-slate-600">ပစ္စည်းအမည်:</span>
-                        <span class="font-bold text-slate-900" id="vItemName">-</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-600">သတ်မှတ် ငွေပမာဏ:</span>
-                        <span class="font-bold text-amber-800 text-base" id="vItemPrice">- ကျပ်</span>
+                <!-- Photos Evidence Preview in Voucher -->
+                <div class="border p-3 rounded text-xs no-print">
+                    <div class="font-bold text-slate-700 mb-2">Cloud သို့ တင်ထားသော Evidence ဓာတ်ပုံများ</div>
+                    <div class="grid grid-cols-4 gap-2 text-center" id="photoEvidences">
+                        <!-- Dynamic Images -->
                     </div>
                 </div>
 
-                <!-- Terms & Statement on Voucher -->
-                <div class="text-[11px] text-slate-600 bg-slate-50 p-3 rounded mb-4 border leading-relaxed space-y-1">
-                    <p><strong>စည်းကမ်းချက်များ :</strong> ပြန်လည်ဝယ်ယူလိုပါက ပြေစာပါတစ်ပါတည်းယူဆောင်လာရမည် "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြေစာ တင်ပြနိုင်သူသာ ပစ္စည်း ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်ပြီး ဝယ်ယူခွင့်စာချုပ်အလိုအလျောက်ပျက်ပြယ်ပြီးဖြစ်သည်။</p>
-                    <p class="text-slate-800 font-semibold pt-1 border-t border-slate-200">
-                        [✓] ကျွန်ုပ်သည် အထက်ပါ စည်းကမ်းချက်များအားလုံးကို ဖတ်ရှုနားလည်ပြီး မိမိဆန္ဒအလျောက် သဘောတူ ဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်/လက်ဗွေ ရေးထိုးပါသည်။
-                    </p>
-                </div>
-
-                <div class="flex justify-between items-end mt-6 pt-4 border-t">
+                <div class="flex justify-between items-end border-t pt-3">
                     <div class="text-center">
-                        <img id="vSignatureImg" class="h-16 max-w-[160px] object-contain mx-auto border-b border-dashed border-slate-400" alt="Signature/Fingerprint">
-                        <p class="text-[11px] text-slate-500 mt-1">ဝယ်ယူသူ/ရောင်းသူ နှစ်ဦးသဘောတူ လက်မှတ်/လက်ဗွေ</p>
+                        <img id="vSignatureImg" class="h-14 max-w-[150px] object-contain mx-auto border-b border-dashed border-slate-400">
+                        <p class="text-[10px] text-slate-500 mt-1">ဝယ်ယူသူ/ရောင်းသူ လက်မှတ်</p>
                     </div>
-                    <div id="vQrcode" class="flex justify-center"></div>
+                    <div class="text-center">
+                        <div id="vQrcode" class="flex justify-center"></div>
+                        <p class="text-[9px] font-mono text-slate-400 mt-1">Secure Hash Token Included</p>
+                    </div>
+                </div>
+
+                <!-- Audit Log Section -->
+                <div class="border-t pt-2 text-[10px] text-slate-400 space-y-0.5 no-print">
+                    <div class="font-bold text-slate-500">Audit Trail History:</div>
+                    <div id="auditLogList"></div>
                 </div>
             </div>
 
-            <!-- Action Buttons inside Modal -->
-            <div class="no-print mt-6 flex justify-between items-center border-t pt-4">
-                <button id="btnSettle" onclick="settleContract()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition flex items-center">
-                    <i class="fa-solid fa-circle-check me-2"></i> ပစ္စည်း ပြန်လည်ဝယ်ယူပြီးကြောင်း မှတ်တမ်းတင်မည်
-                </button>
-                <div class="flex space-x-2">
-                    <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg text-sm transition flex items-center">
-                        <i class="fa-solid fa-print me-2"></i> Print / PDF အဖြစ်သိမ်းမည်
+              <div class="no-print mt-4 flex justify-between items-center border-t pt-3">
+                <div class="space-x-1">
+                    <button id="btnSettle" onclick="updateContractStatus('SETTLED')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs">
+                        <i class="fa-solid fa-check me-1"></i> ပြန်လည်ဝယ်ယူပြီးကြောင်း မှတ်တမ်းတင်မည်
+                    </button>
+                    <button id="btnCancel" onclick="softDeletePrompt()" class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded text-xs">
+                        <i class="fa-solid fa-ban me-1"></i> စာချုပ် ပယ်ဖျက်မည် (Soft Delete)
                     </button>
                 </div>
+                <button onclick="window.print()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded text-xs">
+                    <i class="fa-solid fa-print me-1"></i> Print / PDF
+                </button>
             </div>
-
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- Firebase Script Logic -->
     <script>
-        // System State
-        let contractsData = JSON.parse(localStorage.getItem('store_contracts_db')) || [];
-        let activeContractId = null;
-        let html5QrCode = null;
-        let uploadedImageBase64 = "";
+        // 1. Firebase Credentials Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
+            authDomain: "quick-tradein-app.firebaseapp.com",
+            databaseURL: "https://quick-tradein-app-default-rtdb.firebaseio.com",
+            projectId: "quick-tradein-app",
+            storageBucket: "quick-tradein-app.firebasestorage.app",
+            messagingSenderId: "1045062546373",
+            appId: "1:1045062546373:web:ef23268eaa76330daa91ac",
+            measurementId: "G-PYWJ781099"
+        };
 
-        // Admin Security System Config
-        const ADMIN_PASSWORD = "1234";
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
 
-        // Canvas Variables
-        let canvas, ctx;
-        let isDrawing = false;
+        let activeContractData = null;
+        let canvas, ctx, isDrawing = false;
 
+        // Initialize Canvas
         function initCanvas() {
             canvas = document.getElementById('sigCanvas');
-            if (!canvas) return;
             ctx = canvas.getContext('2d');
             ctx.strokeStyle = "#0f172a";
             ctx.lineWidth = 2;
-            ctx.lineCap = "round";
 
             function getPos(e) {
                 const rect = canvas.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 return {
-                    x: clientX - rect.left,
-                    y: clientY - rect.top
+                    x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+                    y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
                 };
             }
+            function start(e) { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+            function draw(e) { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+            function stop() { isDrawing = false; }
 
-            function startDraw(e) {
-                isDrawing = true;
-                const pos = getPos(e);
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
-            }
-
-            function draw(e) {
-                if (!isDrawing) return;
-                const pos = getPos(e);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-            }
-
-            function stopDraw() { isDrawing = false; }
-
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', stopDraw);
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', stop);
         }
 
-        function clearSignature() {
-            if (ctx && canvas) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        }
+        function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        function isCanvasBlank() {
-            if (!ctx || !canvas) return true;
-            const pixelBuffer = new Uint32Array(
-                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-            );
-            return !pixelBuffer.some(color => color !== 0);
-        }
-
-        // Toggle Signature & Upload Method
-        function toggleSigMethod(method) {
-            if (method === 'draw') {
-                document.getElementById('drawSigSection').classList.remove('hidden');
-                document.getElementById('uploadSigSection').classList.add('hidden');
-            } else {
-                document.getElementById('drawSigSection').classList.add('hidden');
-                document.getElementById('uploadSigSection').classList.remove('hidden');
-            }
-        }
-
-        function previewUploadedImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImageBase64 = e.target.result;
-                    const preview = document.getElementById('uploadedPreview');
-                    preview.src = uploadedImageBase64;
-                    preview.classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Admin Password Verification
-        function checkAdminPassword() {
-            const pwd = prompt("စာချုပ်အား ပြင်ဆင်/ဖျက်ဆီး ရန် Admin Password ရိုက်ထည့်ပါ:");
-            if (pwd === ADMIN_PASSWORD) {
-                return true;
-            } else {
-                alert("Password မမှန်ကန်ပါ။ လုပ်ဆောင်ခွင့် မရှိပါ။");
-                return false;
-            }
-        }
-
-        // Helper: Check if Contract is Expired (> 30 Days)
-        function getComputedStatus(contract) {
-            if (contract.status === 'SETTLED') return 'SETTLED';
+        // Upload Helper for Firebase Storage
+        async function uploadFileToStorage(fileInputId, pathName) {
+            const fileInput = document.getElementById(fileInputId);
+            if (!fileInput || !fileInput.files[0]) return "";
             
-            const createdDate = new Date(contract.rawDate || Date.now());
-            const currentDate = new Date();
-            const diffTime = Math.abs(currentDate - createdDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 30) {
-                return 'EXPIRED';
-            }
-            return 'ACTIVE';
+            const file = fileInput.files[0];
+            const storageRef = storage.ref(`${pathName}/${Date.now()}_${file.name}`);
+            const snapshot = await storageRef.put(file);
+            return await snapshot.ref.getDownloadURL();
         }
 
-        // Tab Navigation Switcher
-        function switchTab(tabName) {
-            document.getElementById('sec-create').classList.add('hidden');
-            document.getElementById('sec-list').classList.add('hidden');
-            document.getElementById('sec-scanner').classList.add('hidden');
-
-            document.getElementById('tab-btn-create').classList.remove('bg-amber-800');
-            document.getElementById('tab-btn-list').classList.remove('bg-amber-800');
-            document.getElementById('tab-btn-scanner').classList.remove('bg-amber-800');
-
-            if (tabName === 'create') {
-                document.getElementById('sec-create').classList.remove('hidden');
-                document.getElementById('tab-btn-create').classList.add('bg-amber-800');
-                stopScanner();
-            } else if (tabName === 'list') {
-                document.getElementById('sec-list').classList.remove('hidden');
-                document.getElementById('tab-btn-list').classList.add('bg-amber-800');
-                renderContractTable();
-                stopScanner();
-            } else if (tabName === 'scanner') {
-                document.getElementById('sec-scanner').classList.remove('hidden');
-                document.getElementById('tab-btn-scanner').classList.add('bg-amber-800');
-                startScanner();
+        // Generate Secure Token QR Code Text
+        function generateSecureQRToken(docId, imei) {
+            const secret = "TRIN_SECURE_TOKEN_2026";
+            const raw = `${docId}_${imei}_${secret}`;
+            let hash = 0;
+            for (let i = 0; i < raw.length; i++) {
+                hash = (hash << 5) - hash + raw.charCodeAt(i);
+                hash |= 0;
             }
+            return JSON.stringify({ id: docId, token: Math.abs(hash).toString(16), ver: "v2.0" });
         }
 
-        // Save or Edit Contract Form Handling
-        function handleFormSubmit(e) {
+        // Form Submit to Firebase
+        async function handleFormSubmit(e) {
             e.preventDefault();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i> Cloud သို့ တင်နေသည်...`;
 
-            const sigType = document.querySelector('input[name="sigType"]:checked').value;
-            let finalSigData = "";
-
-            if (sigType === 'draw') {
-                if (isCanvasBlank()) {
-                    alert("ကျေးဇူးပြု၍ ဝယ်ယူသူ/ရောင်းသူ၏ လက်မှတ် ရေးထိုးပေးပါ။");
-                    return;
-                }
-                finalSigData = canvas.toDataURL();
-            } else {
-                if (!uploadedImageBase64) {
-                    alert("ကျေးဇူးပြု၍ လက်ဗွေ သို့မဟုတ် လက်မှတ် ပုံရိပ် ဖိုင် တင်ပေးပါ။");
-                    return;
-                }
-                finalSigData = uploadedImageBase64;
-            }
-
-            const editDocId = document.getElementById('editDocId').value;
-
-            if (editDocId) {
-                const idx = contractsData.findIndex(c => c.id === editDocId);
-                if (idx !== -1) {
-                    contractsData[idx].custName = document.getElementById('custName').value.trim();
-                    contractsData[idx].custPhone = document.getElementById('custPhone').value.trim();
-                    contractsData[idx].custNRC = document.getElementById('custNRC').value.trim() || '-';
-                    contractsData[idx].itemName = document.getElementById('itemName').value.trim();
-                    contractsData[idx].itemPrice = parseFloat(document.getElementById('itemPrice').value);
-                    contractsData[idx].signatureData = finalSigData;
-                    
-                    localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
-                    alert("စာချုပ် အချက်အလက်များကို ပြင်ဆင်ပြီးပါပြီ။");
-                    resetFormState();
-                    openVoucherModal(editDocId);
-                }
-            } else {
+            try {
                 const docId = 'CTR-' + Date.now().toString().slice(-6);
-                const now = new Date();
-                const newContract = {
+                
+                // Upload Photos parallelly to Firebase Storage
+                const [nrcUrl, sellerUrl, itemUrl, imeiUrl] = await Promise.all([
+                    uploadFileToStorage('nrcPhoto', 'kyc'),
+                    uploadFileToStorage('sellerPhoto', 'kyc'),
+                    uploadFileToStorage('itemPhoto', 'items'),
+                    uploadFileToStorage('imeiPhoto', 'items')
+                ]);
+
+                // Date Calculations
+                const startDate = new Date();
+                const durationDays = parseInt(document.getElementById('contractDuration').value) || 30;
+                const dueDate = new Date();
+                dueDate.setDate(startDate.getDate() + durationDays);
+
+                const contractData = {
                     id: docId,
                     custName: document.getElementById('custName').value.trim(),
                     custPhone: document.getElementById('custPhone').value.trim(),
-                    custNRC: document.getElementById('custNRC').value.trim() || '-',
-                    itemName: document.getElementById('itemName').value.trim(),
+                    custNRC: document.getElementById('custNRC').value.trim(),
+                    itemBrand: document.getElementById('itemBrand').value.trim(),
+                    itemModel: document.getElementById('itemModel').value.trim(),
+                    itemIMEI1: document.getElementById('itemIMEI1').value.trim(),
+                    itemIMEI2: document.getElementById('itemIMEI2').value.trim() || '-',
+                    itemSpecs: document.getElementById('itemSpecs').value.trim() || '-',
                     itemPrice: parseFloat(document.getElementById('itemPrice').value),
-                    date: now.toLocaleDateString('my-MM', { year: 'numeric', month: 'long', day: 'numeric' }),
-                    rawDate: now.toISOString(),
+                    startDate: startDate.toISOString().split('T')[0],
+                    dueDate: dueDate.toISOString().split('T')[0],
                     status: 'ACTIVE',
-                    signatureData: finalSigData,
-                    termsAgreed: document.getElementById('termsCheck').checked
+                    signatureData: canvas.toDataURL(),
+                    photos: { nrcUrl, sellerUrl, itemUrl, imeiUrl },
+                    secureToken: generateSecureQRToken(docId, document.getElementById('itemIMEI1').value),
+                    auditLogs: [{
+                        action: "CREATED",
+                        timestamp: new Date().toISOString(),
+                        details: "စာချုပ် ပထမဆုံး ဖန်တီးခဲ့သည်"
+                    }]
                 };
 
-                contractsData.unshift(newContract);
-                localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
+                // Save to Firestore
+                await db.collection("contracts").doc(docId).set(contractData);
 
-                alert("စာချုပ် သိမ်းဆည်းပြီးပါပြီ။");
+                alert("Firestore Database သို့ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
                 resetFormState();
-                openVoucherModal(docId);
+                openVoucherModal(contractData);
+
+            } catch (err) {
+                console.error("Firebase Storage/Firestore Error: ", err);
+                alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-2"></i> Firebase သို့ သိမ်းဆည်းမည်`;
             }
         }
 
-        function resetFormState() {
-            document.getElementById('contractForm').reset();
-            document.getElementById('editDocId').value = "";
-            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-file-signature me-2"></i> စာချုပ်အသစ် ဖန်တီးယူခြင်း`;
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-            clearSignature();
-            uploadedImageBase64 = "";
-            document.getElementById('uploadedPreview').classList.add('hidden');
-            toggleSigMethod('draw');
-        }
-
-        // Render Table Data
-        function renderContractTable() {
+        // Fetch Data from Firestore
+        async function fetchContractsFromFirestore() {
             const tbody = document.getElementById('contractTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-400"><i class="fa-solid fa-spinner fa-spin me-2"></i> Cloud မှ Data ဆွဲယူနေသည်...</td></tr>`;
+
             const search = document.getElementById('searchInput').value.toLowerCase();
             const filter = document.getElementById('statusFilter').value;
-            tbody.innerHTML = '';
 
-            const filtered = contractsData.filter(c => {
-                const computedStatus = getComputedStatus(c);
-                const matchesSearch = c.custName.toLowerCase().includes(search) || c.id.toLowerCase().includes(search);
-                const matchesFilter = (filter === 'ALL') || (computedStatus === filter);
-                return matchesSearch && matchesFilter;
-            });
+            try {
+                let query = db.collection("contracts");
+                const snapshot = await query.get();
+                tbody.innerHTML = '';
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-slate-400">စာချုပ်များ မရှိသေးပါ။</td></tr>`;
-                return;
-            }
-
-            filtered.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
-
-                const computedStatus = getComputedStatus(c);
-                let statusBadge = "";
-
-                if (computedStatus === 'SETTLED') {
-                    statusBadge = `<span class="px-2 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-full text-xs">ပြန်လည်ဝယ်ယူပြီး</span>`;
-                } else if (computedStatus === 'EXPIRED') {
-                    statusBadge = `<span class="px-2 py-1 bg-red-100 text-red-700 font-bold rounded-full text-xs">သက်တမ်းလွန် ဆိုင်ပိုင်</span>`;
-                } else {
-                    statusBadge = `<span class="px-2 py-1 bg-blue-100 text-blue-700 font-bold rounded-full text-xs">ကျန်ရှိနေသေး</span>`;
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-400">စာချုပ် မှတ်တမ်းများ မရှိသေးပါ။</td></tr>`;
+                    return;
                 }
 
-                tr.innerHTML = `
-                    <td class="p-3 font-mono font-bold text-amber-800">${c.id}</td>
-                    <td class="p-3 font-semibold">${c.custName}</td>
-                    <td class="p-3">${c.custPhone}</td>
-                    <td class="p-3">${c.itemName}</td>
-                    <td class="p-3 font-bold">${c.itemPrice.toLocaleString()} ကျပ်</td>
-                    <td class="p-3 text-xs text-slate-500">${c.date}</td>
-                    <td class="p-3">${statusBadge}</td>
-                    <td class="p-3 text-center space-x-1">
-                        <button onclick="openVoucherModal('${c.id}')" title="ကြည့်မည်" class="px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 text-xs">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                        <button onclick="editContractPrompt('${c.id}')" title="ပြင်ဆင်မည်" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="deleteContractPrompt('${c.id}')" title="ဖျက်မည်" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+                snapshot.forEach(doc => {
+                    const c = doc.data();
+                    
+                    // Dynamic Computed Expired Logic
+                    let computedStatus = c.status;
+                    const today = new Date().toISOString().split('T')[0];
+                    if (c.status === 'ACTIVE' && today > c.dueDate) {
+                        computedStatus = 'EXPIRED';
+                    }
 
-        // Edit Contract Prompt
-        function editContractPrompt(docId) {
-            if (!checkAdminPassword()) return;
+                    // Filtering
+                    const matchesFilter = (filter === 'ALL') || (computedStatus === filter);
+                    const matchesSearch = c.custName.toLowerCase().includes(search) || 
+                                          c.id.toLowerCase().includes(search) || 
+                                          c.itemIMEI1.toLowerCase().includes(search);
 
-            const item = contractsData.find(c => c.id === docId);
-            if (!item) return;
+                    if (matchesFilter && matchesSearch) {
+                        let badge = `<span class="px-2 py-0.5 bg-blue-100 text-blue-700 font-bold rounded text-xs">ACTIVE</span>`;
+                        if (computedStatus === 'SETTLED') badge = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded text-xs">SETTLED</span>`;
+                        if (computedStatus === 'EXPIRED') badge = `<span class="px-2 py-0.5 bg-red-100 text-red-700 font-bold rounded text-xs">EXPIRED</span>`;
+                        if (computedStatus === 'CANCELLED') badge = `<span class="px-2 py-0.5 bg-slate-200 text-slate-700 font-bold rounded text-xs">CANCELLED</span>`;
 
-            switchTab('create');
-            document.getElementById('editDocId').value = item.id;
-            document.getElementById('custName').value = item.custName;
-            document.getElementById('custPhone').value = item.custPhone;
-            document.getElementById('custNRC').value = item.custNRC;
-            document.getElementById('itemName').value = item.itemName;
-            document.getElementById('itemPrice').value = item.itemPrice;
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 border-b";
+                        tr.innerHTML = `
+                            <td class="p-3 font-mono font-bold text-amber-800">${c.id}</td>
+                            <td class="p-3"><strong>${c.custName}</strong><br><span class="text-xs text-slate-500">${c.custPhone}</span></td>
+                            <td class="p-3"><strong>${c.itemBrand} ${c.itemModel}</strong><br><span class="text-xs font-mono text-slate-500">IMEI: ${c.itemIMEI1}</span></td>
+                            <td class="p-3 font-bold">${c.itemPrice.toLocaleString()} ကျပ်</td>
+                            <td class="p-3 text-xs font-semibold text-red-600">${c.dueDate}</td>
+                            <td class="p-3">${badge}</td>
+                            <td class="p-3 text-center">
+                                <button onclick='openVoucherModal(${JSON.stringify(c)})' class="px-2 py-1 bg-slate-800 text-white rounded text-xs hover:bg-slate-700">
+                                    <i class="fa-solid fa-eye me-1"></i> ကြည့်မည်
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
 
-            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 text-blue-600"></i> စာချုပ် အချက်အလက် ပြင်ဆင်ခြင်း (${item.id})`;
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-        }
-
-        // Delete Contract Prompt
-        function deleteContractPrompt(docId) {
-            if (!checkAdminPassword()) return;
-
-            if (confirm(`စာချုပ် ID: ${docId} အား လုံးဝ ဖျက်ဆီးပစ်ရန် သေချာပါသလား?`)) {
-                contractsData = contractsData.filter(c => c.id !== docId);
-                localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
-                alert("စာချုပ် ဖျက်ပြီးပါပြီ။");
-                renderContractTable();
+            } catch (err) {
+                console.error("Firestore Fetch Error: ", err);
             }
         }
 
-        // Modal View Controls & QR Generation
-        function openVoucherModal(docId) {
-            const item = contractsData.find(c => c.id === docId);
-            if (!item) return;
+        // Open Voucher Modal
+        function openVoucherModal(c) {
+            activeContractData = c;
 
-            activeContractId = docId;
+            document.getElementById('vDocId').innerText = "ID: " + c.id;
+            document.getElementById('vCustName').innerText = c.custName;
+            document.getElementById('vCustPhone').innerText = c.custPhone;
+            document.getElementById('vCustNRC').innerText = c.custNRC;
+            document.getElementById('vStartDate').innerText = c.startDate;
+            document.getElementById('vDueDate').innerText = c.dueDate;
+            document.getElementById('vItemPrice').innerText = c.itemPrice.toLocaleString() + " ကျပ်";
+            document.getElementById('vItemModel').innerText = `${c.itemBrand} ${c.itemModel}`;
+            document.getElementById('vIMEI1').innerText = c.itemIMEI1 + (c.itemIMEI2 !== '-' ? ` / ${c.itemIMEI2}` : '');
+            document.getElementById('vSpecs').innerText = c.itemSpecs;
+            document.getElementById('vSignatureImg').src = c.signatureData;
 
-            document.getElementById('vDocId').innerText = "ID: " + item.id;
-            document.getElementById('vCustName').innerText = item.custName;
-            document.getElementById('vCustPhone').innerText = item.custPhone;
-            document.getElementById('vCustNRC').innerText = item.custNRC;
-            document.getElementById('vDate').innerText = item.date;
-            document.getElementById('vItemName').innerText = item.itemName;
-            document.getElementById('vItemPrice').innerText = item.itemPrice.toLocaleString();
-            document.getElementById('vSignatureImg').src = item.signatureData;
+            // Handle Watermarks & Computed Status
+            const today = new Date().toISOString().split('T')[0];
+            let computedStatus = c.status;
+            if (c.status === 'ACTIVE' && today > c.dueDate) computedStatus = 'EXPIRED';
 
-            const settledWatermark = document.getElementById('settledWatermark');
-            const expiredWatermark = document.getElementById('expiredWatermark');
-            const btnSettle = document.getElementById('btnSettle');
-
-            const computedStatus = getComputedStatus(item);
-
-            settledWatermark.classList.add('hidden');
-            expiredWatermark.classList.add('hidden');
+            document.getElementById('settledWatermark').classList.add('hidden');
+            document.getElementById('expiredWatermark').classList.add('hidden');
+            document.getElementById('cancelledWatermark').classList.add('hidden');
+            document.getElementById('btnSettle').classList.remove('hidden');
+            document.getElementById('btnCancel').classList.remove('hidden');
 
             if (computedStatus === 'SETTLED') {
-                settledWatermark.classList.remove('hidden');
-                btnSettle.classList.add('hidden');
+                document.getElementById('settledWatermark').classList.remove('hidden');
+                document.getElementById('btnSettle').classList.add('hidden');
             } else if (computedStatus === 'EXPIRED') {
-                expiredWatermark.classList.remove('hidden');
-                btnSettle.classList.add('hidden');
-            } else {
-                btnSettle.classList.remove('hidden');
+                document.getElementById('expiredWatermark').classList.remove('hidden');
+                document.getElementById('btnSettle').classList.add('hidden');
+            } else if (computedStatus === 'CANCELLED') {
+                document.getElementById('cancelledWatermark').classList.remove('hidden');
+                document.getElementById('btnSettle').classList.add('hidden');
+                document.getElementById('btnCancel').classList.add('hidden');
             }
 
+            // Render Photos
+            const photoDiv = document.getElementById('photoEvidences');
+            photoDiv.innerHTML = '';
+            const p = c.photos || {};
+            const imgs = [
+                { label: 'NRC', url: p.nrcUrl },
+                { label: 'Seller Live', url: p.sellerUrl },
+                { label: 'Item', url: p.itemUrl },
+                { label: 'IMEI', url: p.imeiUrl }
+            ];
+            imgs.forEach(img => {
+                if (img.url) {
+                    photoDiv.innerHTML += `<div><a href="${img.url}" target="_blank"><img src="${img.url}" class="h-12 w-full object-cover border rounded mb-1"></a><span class="text-[9px] text-slate-500">${img.label}</span></div>`;
+                }
+            });
+
+            // Generate Secure QR Code
             const qrContainer = document.getElementById('vQrcode');
             qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: item.id,
-                width: 80,
-                height: 80
+            new QRCode(qrContainer, { text: c.secureToken || c.id, width: 75, height: 75 });
+
+            // Audit Logs History Render
+            const auditDiv = document.getElementById('auditLogList');
+            auditDiv.innerHTML = '';
+            (c.auditLogs || []).forEach(log => {
+                auditDiv.innerHTML += `<div>• <strong>${log.action}</strong> at ${new Date(log.timestamp).toLocaleString()} - ${log.details}</div>`;
             });
 
             document.getElementById('voucherModal').classList.remove('hidden');
         }
 
-        function closeVoucherModal() {
-            document.getElementById('voucherModal').classList.add('hidden');
-            activeContractId = null;
-        }
+        function closeVoucherModal() { document.getElementById('voucherModal').classList.add('hidden'); }
 
-        // Mark Contract as Settled
-        function settleContract() {
-            if (!activeContractId) return;
+        // Status Update Logic (Settled / Soft Delete)
+        async function updateContractStatus(newStatus, reason = "") {
+            if (!activeContractData) return;
 
-            if (confirm("ဒီစာချုပ်အား ပစ္စည်း ပြန်လည်ဝယ်ယူပြီးကြောင်း အပြီးသတ် သတ်မှတ်မှာ သေချာပါသလား?")) {
-                const idx = contractsData.findIndex(c => c.id === activeContractId);
-                if (idx !== -1) {
-                    contractsData[idx].status = 'SETTLED';
-                    localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
-                    
-                    speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည် ဝယ်ယူပြီး ပျက်ပြယ်ပြီးသား ဖြစ်ပါသည်");
+            const docRef = db.collection("contracts").doc(activeContractData.id);
+            const newAuditLog = {
+                action: newStatus,
+                timestamp: new Date().toISOString(),
+                details: reason || `အခြေအနေအား ${newStatus} သို့ ပြောင်းလဲခဲ့သည်`
+            };
 
-                    openVoucherModal(activeContractId);
-                    renderContractTable();
-                }
+            try {
+                await docRef.update({
+                    status: newStatus,
+                    auditLogs: firebase.firestore.FieldValue.arrayUnion(newAuditLog)
+                });
+
+                alert(`စာချုပ် အခြေအနေအား ${newStatus} သို့ ပြောင်းလဲပြီးပါပြီ။`);
+                closeVoucherModal();
+                fetchContractsFromFirestore();
+            } catch (err) {
+                alert("Update လုပ်ရာတွင် အမှားရှိပါသည်: " + err.message);
             }
         }
 
-        // QR Code Scanner Logic
-        function startScanner() {
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                (decodedText) => {
-                    const item = contractsData.find(c => c.id === decodedText.trim());
-                    if (item) {
-                        const computedStatus = getComputedStatus(item);
-                        if (computedStatus === 'SETTLED') {
-                            speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည် ဝယ်ယူပြီး ပျက်ပြယ်ပြီးသား ဖြစ်ပါသည်");
-                        } else if (computedStatus === 'EXPIRED') {
-                            speakFeedback("ဒီစာချုပ်မှာ သက်တမ်းလွန်သွားပြီဖြစ်သဖြင့် ဆိုင်ပိုင် ပစ္စည်း ဖြစ်ပါသည်");
-                        } else {
-                            speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည်ဝယ်ယူရန် ကျန်ရှိနေသေးပါသည်");
-                        }
-                        openVoucherModal(item.id);
-                    } else {
-                        alert("သက်ဆိုင်သော စာချုပ် မတွေ့ရှိပါ။");
-                    }
-                },
-                (errorMessage) => {
-                    // Ignore scan errors
-                }
-            ).catch(err => console.error(err));
-        }
-
-        function stopScanner() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => html5QrCode.clear()).catch(err => console.error(err));
+        function softDeletePrompt() {
+            const reason = prompt("စာချုပ်အား ပယ်ဖျက်ရသည့် အကြောင်းအရင်း ရေးသားပါ:");
+            if (reason) {
+                updateContractStatus('CANCELLED', "စာချုပ် ပယ်ဖျက်ခဲ့သည်: " + reason);
             }
         }
 
-        // Voice Feedback Speech
-        function speakFeedback(text) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'my-MM';
-                window.speechSynthesis.speak(utterance);
+        // Tab Navigation
+        function switchTab(tab) {
+            document.getElementById('sec-create').classList.add('hidden');
+            document.getElementById('sec-list').classList.add('hidden');
+            document.getElementById('tab-btn-create').classList.remove('bg-amber-600');
+            document.getElementById('tab-btn-list').classList.remove('bg-amber-600');
+
+            if (tab === 'create') {
+                document.getElementById('sec-create').classList.remove('hidden');
+                document.getElementById('tab-btn-create').classList.add('bg-amber-600');
+            } else {
+                document.getElementById('sec-list').classList.remove('hidden');
+                document.getElementById('tab-btn-list').classList.add('bg-amber-600');
+                fetchContractsFromFirestore();
             }
         }
 
-        // App Initialization
+        function resetFormState() {
+            document.getElementById('contractForm').reset();
+            clearSignature();
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initCanvas();
         });
     </script>
 </body>
-</html>
+    </html>
