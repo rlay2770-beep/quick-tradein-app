@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick Trade-In & Contract System (Fast Upload)</title>
+    <title>Quick Trade-In & Contract System</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -133,11 +133,11 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">သတ်မှတ် ငွေပမာဏ (ကျပ်) *</label>
-                                <input type="number" id="itemPrice" required min="0" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                                <input type="text" id="itemPrice" required placeholder="300000" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">စာချုပ် သက်တမ်း (ရက်)</label>
-                                <input type="number" id="contractDuration" value="30" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
+                                <input type="text" id="contractDuration" value="30" required class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-amber-500">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -174,7 +174,7 @@
                     <div class="flex justify-end space-x-2">
                         <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm hidden">မလုပ်တော့ပါ</button>
                         <button type="submit" id="saveBtn" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-md text-sm transition flex items-center">
-                            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Firebase သို့ သိမ်းဆည်းမည်
+                            <i class="fa-solid fa-cloud-arrow-up me-2"></i> ဖိုင်သိမ်းမည်
                         </button>
                     </div>
                 </form>
@@ -282,7 +282,7 @@
                 </div>
             </div>
 
-             <div class="no-print mt-4 flex justify-between items-center border-t pt-3">
+            <div class="no-print mt-4 flex justify-between items-center border-t pt-3">
                 <div class="space-x-1">
                     <button id="btnSettle" onclick="updateContractStatus('SETTLED')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs">
                         <i class="fa-solid fa-check me-1"></i> ပြန်လည်ဝယ်ယူပြီးကြောင်း မှတ်တမ်းတင်မည်
@@ -300,7 +300,7 @@
 
     <!-- Firebase Script Logic -->
     <script>
-        // 1. Firebase Credentials Setup
+        // Firebase Credentials Setup
         const firebaseConfig = {
             apiKey: "AIzaSyB04ep1qXo2p9ZHzjtzO9f7ewrTE9Zhjo0",
             authDomain: "quick-tradein-app.firebaseapp.com",
@@ -320,8 +320,15 @@
         let activeContractData = null;
         let canvas, ctx, isDrawing = false;
 
-        // Image Compression Engine (ပုံဆိုဒ်များကို အလိုအလျောက် သေးပေးမည့်စနစ်)
-        function compressImage(file, maxWidth = 1024, quality = 0.7) {
+        // မြန်မာဂဏန်းများကို အင်္ဂလိပ်ဂဏန်းသို့ အလိုအလျောက် ပြောင်းပေးမည့် Helper Function
+        function convertMyanmarDigitsToEnglish(str) {
+            if (!str) return "0";
+            const myanmarDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
+            return str.toString().replace(/[၀-၉]/g, (w) => myanmarDigits.indexOf(w));
+        }
+
+        // Ultra Fast Image Compression Engine (ဖိုင်ဆိုဒ်ကို အသေးဆုံး အဆင့်အထိ ချုံ့ပေးမည့် စနစ်)
+        function compressImage(file, maxWidth = 800, quality = 0.5) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -348,16 +355,16 @@
                             if (blob) {
                                 resolve(blob);
                             } else {
-                                reject(new Error("Image compression failed"));
+                                resolve(file); // Compression မအောင်မြင်ပါက ဖိုင်မူရင်းဖြင့် ဆက်သွားမည်
                             }
                         }, 'image/jpeg', quality);
                     };
                 };
-                reader.onerror = (error) => reject(error);
+                reader.onerror = () => resolve(file);
             });
         }
 
-        // Initialize Canvas
+        // Canvas Setup
         function initCanvas() {
             canvas = document.getElementById('sigCanvas');
             ctx = canvas.getContext('2d');
@@ -381,17 +388,17 @@
 
         function clearSignature() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-        // Fast Upload Helper with Auto Compression
+        // Fast Upload Helper
         async function uploadFileToStorage(fileInputId, pathName) {
             const fileInput = document.getElementById(fileInputId);
             if (!fileInput || !fileInput.files[0]) return "";
             
             const originalFile = fileInput.files[0];
             
-            // ပုံဆိုဒ်ကြီးပါက အလိုအလျောက် Compress လုပ်မည်
+            // Ultra-Compression (Width 800px, Quality 50%)
             let fileToUpload = originalFile;
             if (originalFile.type.startsWith('image/')) {
-                fileToUpload = await compressImage(originalFile, 1024, 0.7);
+                fileToUpload = await compressImage(originalFile, 800, 0.5);
             }
 
             const cleanFileName = originalFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
@@ -400,7 +407,6 @@
             return await snapshot.ref.getDownloadURL();
         }
 
-        // Generate Secure Token QR Code Text
         function generateSecureQRToken(docId, imei) {
             const secret = "TRIN_SECURE_TOKEN_2026";
             const raw = `${docId}_${imei}_${secret}`;
@@ -412,41 +418,51 @@
             return JSON.stringify({ id: docId, token: Math.abs(hash).toString(16), ver: "v2.0" });
         }
 
-        // Form Submit to Firebase
+        // Form Submit Handler
         async function handleFormSubmit(e) {
             e.preventDefault();
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
-            saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i> Cloud သို့ တင်နေသည်...`;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i> ဖိုင်သိမ်းနေသည်...`;
 
             try {
                 const docId = 'CTR-' + Date.now().toString().slice(-6);
                 
-                // Upload Compressed Photos parallelly to Firebase Storage
-                const [nrcUrl, sellerUrl, itemUrl, imeiUrl] = await Promise.all([
-                    uploadFileToStorage('nrcPhoto', 'kyc'),
-                    uploadFileToStorage('sellerPhoto', 'kyc'),
-                    uploadFileToStorage('itemPhoto', 'items'),
-                    uploadFileToStorage('imeiPhoto', 'items')
-                ]);
+                // Upload Compressed Photos Safe Handling
+                let nrcUrl = "", sellerUrl = "", itemUrl = "", imeiUrl = "";
+                try {
+                    [nrcUrl, sellerUrl, itemUrl, imeiUrl] = await Promise.all([
+                        uploadFileToStorage('nrcPhoto', 'kyc'),
+                        uploadFileToStorage('sellerPhoto', 'kyc'),
+                        uploadFileToStorage('itemPhoto', 'items'),
+                        uploadFileToStorage('imeiPhoto', 'items')
+                    ]);
+                } catch (imgErr) {
+                    console.warn("Upload Error fallback: ", imgErr);
+                }
 
-                // Date Calculations
+                // Convert Myanmar Digits to English Numerals (ဂဏန်းအမှား မတက်အောင် Safe Parse လုပ်ခြင်း)
+                const rawPrice = convertMyanmarDigitsToEnglish(document.getElementById('itemPrice').value);
+                const parsedPrice = parseFloat(rawPrice.replace(/[^0-9.]/g, '')) || 0;
+
+                const rawDuration = convertMyanmarDigitsToEnglish(document.getElementById('contractDuration').value);
+                const durationDays = parseInt(rawDuration.replace(/[^0-9]/g, '')) || 30;
+
                 const startDate = new Date();
-                const durationDays = parseInt(document.getElementById('contractDuration').value) || 30;
                 const dueDate = new Date();
                 dueDate.setDate(startDate.getDate() + durationDays);
 
                 const contractData = {
                     id: docId,
                     custName: document.getElementById('custName').value.trim(),
-                    custPhone: document.getElementById('custPhone').value.trim(),
+                    custPhone: convertMyanmarDigitsToEnglish(document.getElementById('custPhone').value.trim()),
                     custNRC: document.getElementById('custNRC').value.trim(),
                     itemBrand: document.getElementById('itemBrand').value.trim(),
                     itemModel: document.getElementById('itemModel').value.trim(),
-                    itemIMEI1: document.getElementById('itemIMEI1').value.trim(),
-                    itemIMEI2: document.getElementById('itemIMEI2').value.trim() || '-',
+                    itemIMEI1: convertMyanmarDigitsToEnglish(document.getElementById('itemIMEI1').value.trim()),
+                    itemIMEI2: convertMyanmarDigitsToEnglish(document.getElementById('itemIMEI2').value.trim()) || '-',
                     itemSpecs: document.getElementById('itemSpecs').value.trim() || '-',
-                    itemPrice: parseFloat(document.getElementById('itemPrice').value),
+                    itemPrice: parsedPrice,
                     startDate: startDate.toISOString().split('T')[0],
                     dueDate: dueDate.toISOString().split('T')[0],
                     status: 'ACTIVE',
@@ -463,16 +479,16 @@
                 // Save to Firestore
                 await db.collection("contracts").doc(docId).set(contractData);
 
-                alert("Firestore Database သို့ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
+                alert("အချက်အလက်များ အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
                 resetFormState();
                 openVoucherModal(contractData);
 
             } catch (err) {
-                console.error("Firebase Storage/Firestore Error: ", err);
+                console.error("Firebase Error: ", err);
                 alert("Data သိမ်းဆည်းရာတွင် အမှားအယွင်းရှိပါသည်: " + err.message);
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-2"></i> Firebase သို့ သိမ်းဆည်းမည်`;
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-2"></i> ဖိုင်သိမ်းမည်`;
             }
         }
 
@@ -496,15 +512,12 @@
 
                 snapshot.forEach(doc => {
                     const c = doc.data();
-                    
-                    // Dynamic Computed Expired Logic
                     let computedStatus = c.status;
                     const today = new Date().toISOString().split('T')[0];
                     if (c.status === 'ACTIVE' && today > c.dueDate) {
                         computedStatus = 'EXPIRED';
                     }
 
-                    // Filtering
                     const matchesFilter = (filter === 'ALL') || (computedStatus === filter);
                     const matchesSearch = c.custName.toLowerCase().includes(search) || 
                                           c.id.toLowerCase().includes(search) || 
@@ -539,8 +552,7 @@
                 console.error("Firestore Fetch Error: ", err);
             }
         }
-
-        // Open Voucher Modal
+     // Open Voucher Modal
         function openVoucherModal(c) {
             activeContractData = c;
 
@@ -556,7 +568,6 @@
             document.getElementById('vSpecs').innerText = c.itemSpecs;
             document.getElementById('vSignatureImg').src = c.signatureData;
 
-            // Handle Watermarks & Computed Status
             const today = new Date().toISOString().split('T')[0];
             let computedStatus = c.status;
             if (c.status === 'ACTIVE' && today > c.dueDate) computedStatus = 'EXPIRED';
@@ -579,7 +590,6 @@
                 document.getElementById('btnCancel').classList.add('hidden');
             }
 
-            // Render Photos
             const photoDiv = document.getElementById('photoEvidences');
             photoDiv.innerHTML = '';
             const p = c.photos || {};
@@ -595,12 +605,10 @@
                 }
             });
 
-            // Generate Secure QR Code
             const qrContainer = document.getElementById('vQrcode');
             qrContainer.innerHTML = '';
             new QRCode(qrContainer, { text: c.secureToken || c.id, width: 75, height: 75 });
 
-            // Audit Logs History Render
             const auditDiv = document.getElementById('auditLogList');
             auditDiv.innerHTML = '';
             (c.auditLogs || []).forEach(log => {
@@ -612,7 +620,6 @@
 
         function closeVoucherModal() { document.getElementById('voucherModal').classList.add('hidden'); }
 
-        // Status Update Logic
         async function updateContractStatus(newStatus, reason = "") {
             if (!activeContractData) return;
 
@@ -644,7 +651,6 @@
             }
         }
 
-        // Tab Navigation
         function switchTab(tab) {
             document.getElementById('sec-create').classList.add('hidden');
             document.getElementById('sec-list').classList.add('hidden');
@@ -671,4 +677,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
