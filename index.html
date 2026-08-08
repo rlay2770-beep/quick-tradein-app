@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ရွှေဆိုင်/စတိုးဆိုင် ပစ္စည်း ပြန်လည်ဝယ်ယူမှုနှင့် စာချုပ် စီမံခန့်ခွဲရေးစနစ်</title>
+    <title>စတိုးဆိုင် ပစ္စည်း ပြန်လည်ဝယ်ယူမှုနှင့် စာချုပ် စီမံခန့်ခွဲရေးစနစ်</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,10 +40,10 @@
         }
         .watermark-settled {
             position: absolute;
-            top: 50%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 800;
             color: rgba(220, 38, 38, 0.25);
             border: 6px solid rgba(220, 38, 38, 0.25);
@@ -81,14 +81,16 @@
     <!-- Main Content Area -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 no-print">
 
-        <!-- TAB 1: Create New Contract Form -->
+        <!-- TAB 1: Create / Edit Contract Form -->
         <section id="sec-create" class="block">
             <div class="bg-white rounded-xl shadow-md p-6 max-w-4xl mx-auto border border-slate-200">
-                <h2 class="text-xl font-bold text-amber-800 mb-6 border-b pb-3 flex items-center">
+                <h2 id="formTitle" class="text-xl font-bold text-amber-800 mb-6 border-b pb-3 flex items-center">
                     <i class="fa-solid fa-file-signature me-2"></i> စာချုပ်အသစ် ဖန်တီးယူခြင်း
                 </h2>
 
                 <form id="contractForm" onsubmit="handleFormSubmit(event)" class="space-y-6">
+                    <input type="hidden" id="editDocId" value="">
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Customer Name -->
                         <div>
@@ -108,7 +110,7 @@
                         <!-- Item Name/Description -->
                         <div>
                             <label class="block text-sm font-semibold mb-1 text-slate-700">ပစ္စည်းအမည်နှင့် အမျိုးအစား <span class="text-red-500">*</span></label>
-                            <input type="text" id="itemName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="ဥပမာ - ၁၅ ပဲရည် ရွှေဆွဲကြိုး">
+                            <input type="text" id="itemName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="ဥပမာ - ၁၅ ပဲရည် ရွှေဆွဲကြိုး / VIVO Phone">
                         </div>
                         <!-- Purchase/Buyback Price -->
                         <div>
@@ -122,18 +124,46 @@
                         </div>
                     </div>
 
-                    <!-- Digital Signature Canvas -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-sm font-semibold text-slate-700">ဝယ်ယူသူ/ရောင်းသူ၏ လက်မှတ် <span class="text-red-500">*</span></label>
-                            <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline">
-                                <i class="fa-solid fa-rotate-left me-1"></i> ပြန်ရေးမည်
-                            </button>
+                    <!-- Signature & Fingerprint Input Selector -->
+                    <div class="border p-4 rounded-lg bg-slate-50">
+                        <label class="block text-sm font-semibold text-slate-800 mb-2">
+                            ဝယ်ယူသူ/ရောင်းသူ အတည်ပြုချက် (လက်မှတ် သို့မဟုတ် လက်ွေရာ) <span class="text-red-500">*</span>
+                        </label>
+                        
+                        <!-- Toggle Options -->
+                        <div class="flex space-x-4 mb-3 text-sm">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="sigType" value="draw" checked onchange="toggleSigMethod('draw')" class="me-1 text-amber-600">
+                                <span>မောက်စ်/Touch ဖြင့် လက်မှတ်ထိုးမည်</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="sigType" value="upload" onchange="toggleSigMethod('upload')" class="me-1 text-amber-600">
+                                <span>လက်ဗွေ/လက်မှတ် ပုံရိပ် Upload တင်မည်</span>
+                            </label>
                         </div>
-                        <canvas id="sigCanvas" width="500" height="150" class="signature-canvas w-full"></canvas>
+
+                        <!-- Option A: Draw Signature Canvas -->
+                        <div id="drawSigSection">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-slate-500">အောက်ပါ ကွက်လပ်တွင် လက်မှတ်ထိုးပါ</span>
+                                <button type="button" onclick="clearSignature()" class="text-xs text-red-600 hover:underline">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> ပြန်ရေးမည်
+                                </button>
+                            </div>
+                            <canvas id="sigCanvas" width="500" height="140" class="signature-canvas w-full"></canvas>
+                        </div>
+
+                        <!-- Option B: Upload Fingerprint / Signature Image -->
+                        <div id="uploadSigSection" class="hidden">
+                            <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 bg-white">
+                                <input type="file" id="fingerprintFile" accept="image/*" onchange="previewUploadedImage(event)" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer">
+                                <p class="text-xs text-slate-400 mt-2">လက်ဗွေဖတ်စက်မှ ပုံရိပ် သို့မဟုတ် ဖုန်းဖြင့် ရိုက်ကူးထားသော လက်ဗွေ/လက်မှတ် ပုံရိပ် တင်ပါ</p>
+                                <img id="uploadedPreview" class="h-24 mt-2 object-contain hidden border p-1 rounded" alt="Preview">
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Terms & Conditions Updated Section -->
+                    <!-- Terms & Conditions Section -->
                     <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg text-sm text-amber-900 space-y-2">
                         <div class="font-bold flex items-center text-amber-800">
                             <i class="fa-solid fa-file-contract me-2"></i> စည်းကမ်းချက်များ
@@ -144,13 +174,16 @@
                         <div class="flex items-start mt-3 pt-2 border-t border-amber-200">
                             <input type="checkbox" id="termsCheck" required class="mt-1 me-2 h-4 w-4 text-amber-600 focus:ring-amber-500 border-slate-300 rounded cursor-pointer">
                             <label for="termsCheck" class="text-xs text-slate-700 font-medium cursor-pointer">
-                                ကျွန်ုပ်သည် သဘောတူပါသည် ကို နှိပ်ခြင်း/အမှန်ခြစ်ခြင်း အားဖြင့် စည်းကမ်းချက်များကို ဖတ်ရှုနားလည်ပြီး လိုက်နာဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်ရေးထိုးပြီး ဖြစ်ပါသည်။
+                                ကျွန်ုပ်သည် သဘောတူပါသည် ကို နှိပ်ခြင်း/အမှန်ခြစ်ခြင်း အားဖြင့် စည်းကမ်းချက်များကို ဖတ်ရှုနားလည်ပြီး လိုက်နာဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်/လက်ဗွေ ရေးထိုးပြီး ဖြစ်ပါသည်။
                             </label>
                         </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="flex justify-end">
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="cancelEditBtn" onclick="resetFormState()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-sm transition hidden">
+                            မလုပ်တော့ပါ
+                        </button>
                         <button type="submit" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-md transition flex items-center">
                             <i class="fa-solid fa-floppy-disk me-2"></i> စာချုပ်သိမ်းဆည်းမည်
                         </button>
@@ -259,21 +292,24 @@
                     </div>
                 </div>
 
-                <!-- Terms Text on Voucher -->
-                <div class="text-[11px] text-slate-600 bg-slate-50 p-3 rounded mb-4 border leading-relaxed">
-                    <strong>စည်းကမ်းချက်များ:</strong> ပြန်လည်ဝယ်ယူလိုပါက "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။
+                <!-- Complete Terms & Acknowledgement Statement on Print Voucher -->
+                <div class="text-[11px] text-slate-600 bg-slate-50 p-3 rounded mb-4 border leading-relaxed space-y-1">
+                    <p><strong>စည်းကမ်းချက်များ:</strong> ပြန်လည်ဝယ်ယူလိုပါက "ရက်ပေါင်းသုံးဆယ် မပြည့်မီ" နှင့် သို့မဟုတ် "ရက်ပေါင်း (၃၀) အတွင်း" ပြန်လည်ဝယ်ယူနိုင်ပြီး ထိုရက်ထက်ကျော်လွန်ပါက သင်၏ပြန်လည်ဝယ်ယူခွင့် ဆုံးရှုံးသွားမည်ဖြစ်သည်။</p>
+                    <p class="text-slate-800 font-semibold pt-1 border-t border-slate-200">
+                        [✓] ကျွန်ုပ်သည် အထက်ပါ စည်းကမ်းချက်များအားလုံးကို ဖတ်ရှုနားလည်ပြီး စေတနာအလျောက် သဘောတူ ဝန်ခံကြောင်း အီလက်ထရောနစ် လက်မှတ်/လက်ဗွေ ရေးထိုးပါသည်။
+                    </p>
                 </div>
 
                 <div class="flex justify-between items-end mt-6 pt-4 border-t">
                     <div class="text-center">
-                        <img id="vSignatureImg" class="h-12 max-w-[150px] object-contain mx-auto border-b border-dashed border-slate-400" alt="Signature">
-                        <p class="text-[11px] text-slate-500 mt-1">ဝယ်ယူသူ/ရောင်းသူ လက်မှတ်</p>
+                        <img id="vSignatureImg" class="h-16 max-w-[160px] object-contain mx-auto border-b border-dashed border-slate-400" alt="Signature/Fingerprint">
+                        <p class="text-[11px] text-slate-500 mt-1">ဝယ်ယူသူ/ရောင်းသူ လက်မှတ်/လက်ဗွေ</p>
                     </div>
                     <div id="vQrcode" class="flex justify-center"></div>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action Buttons inside Modal -->
             <div class="no-print mt-6 flex justify-between items-center border-t pt-4">
                 <button id="btnSettle" onclick="settleContract()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition flex items-center">
                     <i class="fa-solid fa-circle-check me-2"></i> ပစ္စည်း ပြန်လည်ဝယ်ယူပြီးကြောင်း မှတ်တမ်းတင်မည်
@@ -288,12 +324,16 @@
         </div>
     </div>
 
-    <!-- JavaScript System Code -->
+      <!-- JavaScript Code Structure -->
     <script>
-        // Data State Management (LocalStorage fallback / Mirror for DB)
+        // System State
         let contractsData = JSON.parse(localStorage.getItem('store_contracts_db')) || [];
         let activeContractId = null;
         let html5QrCode = null;
+        let uploadedImageBase64 = "";
+
+        // Admin Security System Config
+        const ADMIN_PASSWORD = "1234"; // ဆိုင်မန်နေဂျာ/ပိုင်ရှင် အသုံးပြုနိုင်သော Password
 
         // Signature Canvas Logic
         const canvas = document.getElementById('sigCanvas');
@@ -351,7 +391,43 @@
             return !pixelBuffer.some(color => color !== 0);
         }
 
-        // Navigation Switcher
+        // Toggle between Hand-drawn signature and Uploading Fingerprint
+        function toggleSigMethod(method) {
+            if (method === 'draw') {
+                document.getElementById('drawSigSection').classList.remove('hidden');
+                document.getElementById('uploadSigSection').classList.add('hidden');
+            } else {
+                document.getElementById('drawSigSection').classList.add('hidden');
+                document.getElementById('uploadSigSection').classList.remove('hidden');
+            }
+        }
+
+        function previewUploadedImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImageBase64 = e.target.result;
+                    const preview = document.getElementById('uploadedPreview');
+                    preview.src = uploadedImageBase64;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Admin Security Prompt Check
+        function checkAdminPassword() {
+            const pwd = prompt("စာချုပ်အား ပြင်ဆင်/ဖျက်ဆီး ရန် Admin Password ရိုက်ထည့်ပါ:");
+            if (pwd === ADMIN_PASSWORD) {
+                return true;
+            } else {
+                alert("Password မမှန်ကန်ပါ။ လုပ်ဆောင်ခွင့် မရှိပါ။");
+                return false;
+            }
+        }
+
+        // Navigation Tab Switcher
         function switchTab(tabName) {
             document.getElementById('sec-create').classList.add('hidden');
             document.getElementById('sec-list').classList.add('hidden');
@@ -377,39 +453,82 @@
             }
         }
 
-        // Form Submission
+        // Form Submit: Save or Edit Contract
         function handleFormSubmit(e) {
             e.preventDefault();
 
-            if (isCanvasBlank()) {
-                alert("ကျေးဇူးပြု၍ ဝယ်ယူသူ/ရောင်းသူ၏ လက်မှတ် ရေးထိုးပေးပါ။");
-                return;
+            const sigType = document.querySelector('input[name="sigType"]:checked').value;
+            let finalSigData = "";
+
+            if (sigType === 'draw') {
+                if (isCanvasBlank()) {
+                    alert("ကျေးဇူးပြု၍ ဝယ်ယူသူ/ရောင်းသူ၏ လက်မှတ် ရေးထိုးပေးပါ။");
+                    return;
+                }
+                finalSigData = canvas.toDataURL();
+            } else {
+                if (!uploadedImageBase64) {
+                    alert("ကျေးဇူးပြု၍ လက်ဗွေ သို့မဟုတ် လက်မှတ် ပုံရိပ် ဖိုင် တင်ပေးပါ။");
+                    return;
+                }
+                finalSigData = uploadedImageBase64;
             }
 
-            const docId = 'CTR-' + Date.now().toString().slice(-6);
-            const newContract = {
-                id: docId,
-                custName: document.getElementById('custName').value.trim(),
-                custPhone: document.getElementById('custPhone').value.trim(),
-                custNRC: document.getElementById('custNRC').value.trim() || '-',
-                itemName: document.getElementById('itemName').value.trim(),
-                itemPrice: parseFloat(document.getElementById('itemPrice').value),
-                date: new Date().toLocaleDateString('my-MM', { year: 'numeric', month: 'long', day: 'numeric' }),
-                status: 'ACTIVE', // 'ACTIVE' or 'SETTLED'
-                signatureData: canvas.toDataURL(),
-                termsAgreed: document.getElementById('termsCheck').checked
-            };
+            const editDocId = document.getElementById('editDocId').value;
 
-            contractsData.unshift(newContract);
-            localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
+            if (editDocId) {
+                // Update Existing Contract
+                const idx = contractsData.findIndex(c => c.id === editDocId);
+                if (idx !== -1) {
+                    contractsData[idx].custName = document.getElementById('custName').value.trim();
+                    contractsData[idx].custPhone = document.getElementById('custPhone').value.trim();
+                    contractsData[idx].custNRC = document.getElementById('custNRC').value.trim() || '-';
+                    contractsData[idx].itemName = document.getElementById('itemName').value.trim();
+                    contractsData[idx].itemPrice = parseFloat(document.getElementById('itemPrice').value);
+                    contractsData[idx].signatureData = finalSigData;
+                    
+                    localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
+                    alert("စာချုပ် အချက်အလက်များကို ပြင်ဆင်ပြီးပါပြီ။");
+                    resetFormState();
+                    openVoucherModal(editDocId);
+                }
+            } else {
+                // Create New Contract
+                const docId = 'CTR-' + Date.now().toString().slice(-6);
+                const newContract = {
+                    id: docId,
+                    custName: document.getElementById('custName').value.trim(),
+                    custPhone: document.getElementById('custPhone').value.trim(),
+                    custNRC: document.getElementById('custNRC').value.trim() || '-',
+                    itemName: document.getElementById('itemName').value.trim(),
+                    itemPrice: parseFloat(document.getElementById('itemPrice').value),
+                    date: new Date().toLocaleDateString('my-MM', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    status: 'ACTIVE',
+                    signatureData: finalSigData,
+                    termsAgreed: document.getElementById('termsCheck').checked
+                };
 
-            alert("စာချုပ် သိမ်းဆည်းပြီးပါပြီ။");
-            document.getElementById('contractForm').reset();
-            clearSignature();
-            openVoucherModal(docId);
+                contractsData.unshift(newContract);
+                localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
+
+                alert("စာချုပ် သိမ်းဆည်းပြီးပါပြီ။");
+                resetFormState();
+                openVoucherModal(docId);
+            }
         }
 
-        // Render Table Data
+        function resetFormState() {
+            document.getElementById('contractForm').reset();
+            document.getElementById('editDocId').value = "";
+            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-file-signature me-2"></i> စာချုပ်အသစ် ဖန်တီးယူခြင်း`;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            clearSignature();
+            uploadedImageBase64 = "";
+            document.getElementById('uploadedPreview').classList.add('hidden');
+            toggleSigMethod('draw');
+        }
+
+        // Render Table Data with Protected Edit and Delete Actions
         function renderContractTable() {
             const tbody = document.getElementById('contractTableBody');
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -441,9 +560,15 @@
                     <td class="p-3 font-bold">${c.itemPrice.toLocaleString()} ကျပ်</td>
                     <td class="p-3 text-xs text-slate-500">${c.date}</td>
                     <td class="p-3">${statusBadge}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="openVoucherModal('${c.id}')" class="px-3 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 text-xs font-semibold">
-                            ကြည့်ရှုမည်
+                    <td class="p-3 text-center space-x-1">
+                        <button onclick="openVoucherModal('${c.id}')" title="ကြည့်မည်" class="px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 text-xs">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button onclick="editContractPrompt('${c.id}')" title="ပြင်ဆင်မည်" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteContractPrompt('${c.id}')" title="ဖျက်မည်" class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
                 `;
@@ -451,7 +576,38 @@
             });
         }
 
-        // Modal Controls & QR Generation
+        // Edit Contract Trigger (Password Protected)
+        function editContractPrompt(docId) {
+            if (!checkAdminPassword()) return;
+
+            const item = contractsData.find(c => c.id === docId);
+            if (!item) return;
+
+            switchTab('create');
+            document.getElementById('editDocId').value = item.id;
+            document.getElementById('custName').value = item.custName;
+            document.getElementById('custPhone').value = item.custPhone;
+            document.getElementById('custNRC').value = item.custNRC;
+            document.getElementById('itemName').value = item.itemName;
+            document.getElementById('itemPrice').value = item.itemPrice;
+
+            document.getElementById('formTitle').innerHTML = `<i class="fa-solid fa-pen-to-square me-2 text-blue-600"></i> စာချုပ် အချက်အလက် ပြင်ဆင်ခြင်း (${item.id})`;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+        }
+
+        // Delete Contract Trigger (Password Protected)
+        function deleteContractPrompt(docId) {
+            if (!checkAdminPassword()) return;
+
+            if (confirm(`စာချုပ် ID: ${docId} အား လုံးဝ ဖျက်ဆီးပစ်ရန် သေချာပါသလား?`)) {
+                contractsData = contractsData.filter(c => c.id !== docId);
+                localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
+                alert("စာချုပ် ဖျက်ပြီးပါပြီ။");
+                renderContractTable();
+            }
+        }
+
+        // Modal View Controls & QR Generation
         function openVoucherModal(docId) {
             const item = contractsData.find(c => c.id === docId);
             if (!item) return;
@@ -467,7 +623,6 @@
             document.getElementById('vItemPrice').innerText = item.itemPrice.toLocaleString();
             document.getElementById('vSignatureImg').src = item.signatureData;
 
-            // Handle Watermark and Settled state
             const watermark = document.getElementById('settledWatermark');
             const btnSettle = document.getElementById('btnSettle');
 
@@ -479,7 +634,6 @@
                 btnSettle.classList.remove('hidden');
             }
 
-            // QR Generation
             const qrContainer = document.getElementById('vQrcode');
             qrContainer.innerHTML = '';
             new QRCode(qrContainer, {
@@ -496,7 +650,7 @@
             activeContractId = null;
         }
 
-        // Mark Contract as Settled / Buyback Complete
+        // Mark Contract as Settled
         function settleContract() {
             if (!activeContractId) return;
 
@@ -506,7 +660,6 @@
                     contractsData[idx].status = 'SETTLED';
                     localStorage.setItem('store_contracts_db', JSON.stringify(contractsData));
                     
-                    // Voice / Audio Feedback with Updated Text
                     speakFeedback("ဒီစာချုပ်မှာ ပစ္စည်း ပြန်လည် ဝယ်ယူပြီး ပျက်ပြယ်ပြီးသား ဖြစ်ပါသည်");
 
                     openVoucherModal(activeContractId);
@@ -515,7 +668,7 @@
             }
         }
 
-        // QR Code Scanner Implementation
+        // QR Code Scanner Logic
         function startScanner() {
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
@@ -548,7 +701,7 @@
             }
         }
 
-        // Voice Feedback Text Generator
+        // Voice Feedback Speech
         function speakFeedback(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -557,7 +710,7 @@
             }
         }
 
-        // Initialize App
+        // App Initialization
         window.addEventListener('DOMContentLoaded', () => {
             initCanvas();
         });
